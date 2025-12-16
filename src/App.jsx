@@ -9,9 +9,9 @@ import {
 // ==============================================
 // ตั้งค่า URL ของ Backend
 // ==============================================
-// 1. ตอนทดสอบในเครื่องใช้: "http://localhost:8000"
+// 1. ตอนทดสอบในเครื่องใช้: "https://sign-ai-project-backend.onrender.com"
 // 2. ตอน Deploy เสร็จแล้วให้เปลี่ยนเป็น URL ของ Render 
-const API_URL = "http://localhost:8000"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 // ==============================================
 
 // --- Components ---
