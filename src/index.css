@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,7 +32,11 @@ body {
 .animate-pulse-ring {
   animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+```
+
+**Next Steps:**
+1.  **Delete** your `node_modules` folder and `package-lock.json` file.
+2.  Run `npm install` to install the correct stable versions.
+3.  Add the font link to your `frontend/index.html`'s `<head>`:
+    ```html
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
