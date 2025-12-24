@@ -3,15 +3,15 @@ import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { 
   Loader2, Camera, Hand, Save, Play, 
   Home as HomeIcon, Database, Activity, 
-  CheckCircle, RefreshCw, ServerCrash 
+  CheckCircle, RefreshCw, ServerCrash,
+  ChevronRight, HeartPulse, Brain, BookOpen, Layers
 } from "lucide-react";
 
 // ==============================================
-// ตั้งค่า URL ของ Backend
+// ⚙️ ตั้งค่าการเชื่อมต่อ
 // ==============================================
-// 1. ตอนทดสอบในเครื่องใช้: "https://sign-ai-project-backend.onrender.com"
-// 2. ตอน Deploy เสร็จแล้วให้เปลี่ยนเป็น URL ของ Render 
-const API_URL = "https://sign-ai-project-backend.onrender.com"; 
+// เปลี่ยน URL นี้เป็นของ Render ที่คุณได้มา (ไม่มี / ต่อท้าย)
+const API_URL = "https://your-project-name.onrender.com"; 
 // ==============================================
 
 // --- Components ---
@@ -19,32 +19,56 @@ const API_URL = "https://sign-ai-project-backend.onrender.com";
 function Navbar({ page, setPage }) {
   const menus = [
     { id: "home", label: "หน้าหลัก", icon: <HomeIcon size={20} /> },
-    { id: "data", label: "สอนท่ามือ (Train)", icon: <Database size={20} /> },
-    { id: "predict", label: "แปลภาษา (Predict)", icon: <Activity size={20} /> },
+    { id: "data", label: "สอนท่ามือ", icon: <Database size={20} /> },
+    { id: "dictionary", label: "คลังคำศัพท์", icon: <BookOpen size={20} /> }, // เพิ่มเมนูใหม่
+    { id: "predict", label: "แปลภาษา", icon: <Activity size={20} /> },
   ];
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
-      <div className="max-w-4xl mx-auto px-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-2 font-bold text-xl text-blue-600">
-            <Hand className="fill-blue-600 text-white" /> ThaiMed AI
+          <div 
+            className="flex items-center gap-2 font-bold text-2xl cursor-pointer"
+            onClick={() => setPage("home")}
+          >
+            <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 p-2 rounded-lg shadow-lg shadow-blue-500/30">
+              <Hand className="text-white w-6 h-6" />
+            </div>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
+              ThaiMed<span className="font-light">AI</span>
+            </span>
           </div>
-          <div className="flex gap-1">
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex bg-slate-100/50 p-1 rounded-xl">
             {menus.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setPage(m.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm md:text-base ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
                   page === m.id 
-                    ? "bg-blue-50 text-blue-600 font-bold" 
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200" 
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                 }`}
               >
                 {m.icon}
                 <span className="hidden sm:inline">{m.label}</span>
               </button>
             ))}
+          </div>
+
+          {/* Mobile Menu Icon (Simple version) */}
+          <div className="md:hidden flex gap-2">
+             {menus.map((m) => (
+               <button
+                 key={m.id}
+                 onClick={() => setPage(m.id)}
+                 className={`p-2 rounded-lg ${page === m.id ? "bg-blue-100 text-blue-600" : "text-slate-500"}`}
+               >
+                 {m.icon}
+               </button>
+             ))}
           </div>
         </div>
       </div>
@@ -54,54 +78,141 @@ function Navbar({ page, setPage }) {
 
 function HomePage({ setPage }) {
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-10 animate-fade-in">
-      <div className="space-y-4">
-        <div className="inline-block p-4 bg-blue-100 rounded-full text-blue-600 mb-4">
-           <Hand size={48} />
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10 animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl -z-10 animate-pulse delay-700" />
+
+      <div className="max-w-4xl w-full text-center space-y-12 animate-fade-in-up">
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium shadow-sm">
+            <HeartPulse size={16} /> นวัตกรรมเพื่อการแพทย์ยุคใหม่
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-tight">
+            ระบบแปลภาษามือ<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+              ด้วยปัญญาประดิษฐ์
+            </span>
+          </h1>
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
+            เชื่อมต่อการสื่อสารระหว่างบุคลากรทางการแพทย์และผู้บกพร่องทางการได้ยิน 
+            ด้วยเทคโนโลยี AI ที่แม่นยำและรวดเร็ว
+          </p>
         </div>
-        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-          ระบบแปลภาษามือไทย<br/>
-          <span className="text-blue-600">สำหรับทางการแพทย์</span>
-        </h1>
-        <p className="text-lg text-gray-500 max-w-lg mx-auto">
-          AI ช่วยสื่อสารระหว่างบุคลากรทางการแพทย์และผู้บกพร่องทางการได้ยิน 
-          รองรับการตรวจจับพร้อมกัน 2 มือ
-        </p>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <button 
-          onClick={() => setPage("data")}
-          className="p-8 bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all group text-left relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Database size={100} />
-          </div>
-          <div className="h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
-            <Database size={24} />
-          </div>
-          <h3 className="text-xl font-bold mb-2">1. สอนท่ามือ (Data)</h3>
-          <p className="text-gray-500 text-sm">เพิ่มคำศัพท์ใหม่เข้าระบบ เช่น "ปวดหัว", "หมอ" เพื่อให้ AI เรียนรู้</p>
-        </button>
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <button onClick={() => setPage("data")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+              <Database size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-1">สอนท่ามือ</h3>
+            <p className="text-slate-500 text-sm">เพิ่มคำศัพท์ใหม่เข้าระบบ</p>
+          </button>
 
-        <button 
-          onClick={() => setPage("predict")}
-          className="p-8 bg-white rounded-2xl border-2 border-gray-100 hover:border-green-500 shadow-sm hover:shadow-xl transition-all group text-left relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Activity size={100} />
-          </div>
-          <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-4 group-hover:scale-110 transition-transform">
-            <Activity size={24} />
-          </div>
-          <h3 className="text-xl font-bold mb-2">2. เริ่มแปลภาษา (Predict)</h3>
-          <p className="text-gray-500 text-sm">เปิดกล้องเพื่อแปลท่าทางเป็นข้อความแบบ Real-time</p>
-        </button>
+          <button onClick={() => setPage("dictionary")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
+              <BookOpen size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-1">คลังคำศัพท์</h3>
+            <p className="text-slate-500 text-sm">ดูรายการคำศัพท์ที่มีอยู่</p>
+          </button>
+
+          <button onClick={() => setPage("predict")} className="group p-6 bg-slate-900 rounded-3xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
+              <Activity size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1">แปลภาษา</h3>
+            <p className="text-slate-400 text-sm">ใช้งานกล้องเพื่อแปลผล</p>
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+// --- Dictionary Page (หน้าใหม่สำหรับดูข้อมูล) ---
+function DictionaryPage() {
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/dataset`)
+      .then(res => {
+        if (!res.ok) throw new Error("Connection failed");
+        return res.json();
+      })
+      .then(data => {
+        // จัดกลุ่มข้อมูลเพื่อนับจำนวน
+        const grouped = data.reduce((acc, curr) => {
+          acc[curr.label] = (acc[curr.label] || 0) + 1;
+          return acc;
+        }, {});
+        
+        // แปลงเป็น Array เพื่อแสดงผล
+        const statsArray = Object.entries(grouped).map(([label, count]) => ({
+          label,
+          count,
+          lastUpdated: new Date().toLocaleDateString('th-TH') // จำลองวันที่ (ของจริงต้องแก้ Backend ให้ส่งมา)
+        }));
+        
+        setStats(statsArray);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setError("ไม่สามารถดึงข้อมูลได้");
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+          <BookOpen className="text-purple-500" /> คลังคำศัพท์ในระบบ
+        </h2>
+        <p className="text-slate-500 mt-2">รายการท่าทางทั้งหมดที่ AI เรียนรู้แล้ว</p>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="animate-spin text-blue-500 w-10 h-10" />
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-2">
+          <ServerCrash size={20} /> {error}
+        </div>
+      ) : stats.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+          <Database className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-500 text-lg">ยังไม่มีข้อมูลในระบบ</p>
+          <p className="text-slate-400 text-sm">ไปที่เมนู "สอนท่ามือ" เพื่อเพิ่มข้อมูลแรก</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {stats.map((item, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex justify-between items-start mb-4">
+                <div className="h-10 w-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 font-bold text-lg">
+                  {item.label.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs font-medium bg-slate-100 text-slate-500 px-2 py-1 rounded-full">
+                  {item.count} ตัวอย่าง
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-1 group-hover:text-purple-600 transition-colors">
+                {item.label}
+              </h3>
+              <p className="text-xs text-slate-400">อัปเดตล่าสุด: {item.lastUpdated}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- UseHandTracking Hook ---
 const useHandTracking = (videoRef, onResults) => {
   const [loading, setLoading] = useState(true);
   const landmarkerRef = useRef(null);
@@ -119,7 +230,7 @@ const useHandTracking = (videoRef, onResults) => {
             delegate: "GPU"
           },
           runningMode: "VIDEO",
-          numHands: 2 // *** กำหนดให้จับได้สูงสุด 2 มือ ***
+          numHands: 2
         });
         if(isMounted) {
           landmarkerRef.current = landmarker;
@@ -158,26 +269,24 @@ function CameraView({ onLandmarks, overlayText, isRecording, showSkeleton = true
     }
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Mirror effect for drawing context
     ctx.save();
     ctx.scale(-1, 1);
     ctx.translate(-canvas.width, 0);
 
     if (results.landmarks && results.landmarks.length > 0) {
-      // วนลูปวาดมือทุกข้างที่ตรวจจับได้
       if (showSkeleton) {
         for (const handLandmarks of results.landmarks) {
             for (let p of handLandmarks) {
                 ctx.beginPath();
                 ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-                ctx.fillStyle = isRecording ? "#EF4444" : "#00FF00";
+                ctx.fillStyle = isRecording ? "#F87171" : "#34D399";
                 ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "white";
+                ctx.stroke();
             }
         }
       }
-      
-      // รวมข้อมูลทุกมือเป็น Array เดียวกันเพื่อส่งให้ Backend
       const flatPoints = results.landmarks.flatMap(hand => hand.flatMap(p => [p.x, p.y, p.z]));
       onLandmarks(flatPoints);
     } else {
@@ -199,34 +308,45 @@ function CameraView({ onLandmarks, overlayText, isRecording, showSkeleton = true
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-black aspect-video shadow-lg border border-gray-800">
+    <div className="relative rounded-3xl overflow-hidden bg-slate-900 aspect-video shadow-2xl shadow-blue-500/10 border border-slate-800 ring-4 ring-slate-100 group">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center text-white z-20 bg-gray-900">
-          <div className="text-center">
-            <Loader2 className="animate-spin mx-auto mb-2 text-blue-500" />
-            <p className="text-gray-400 text-sm">กำลังโหลดโมเดล AI...</p>
-          </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 bg-slate-900">
+          <Loader2 className="animate-spin mb-4 text-blue-500 w-10 h-10" />
+          <p className="text-slate-400 text-sm font-medium animate-pulse">กำลังเตรียมโมเดล AI...</p>
         </div>
       )}
       
       {!loading && !cameraActive && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/50 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-slate-900/60 backdrop-blur-sm transition-all duration-500 group-hover:bg-slate-900/50">
           <button 
             onClick={startCamera} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full flex items-center gap-2 transition-all font-semibold shadow-lg hover:shadow-blue-500/30 transform hover:scale-105"
+            className="group/btn relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-3 overflow-hidden"
           >
-            <Camera size={20} /> เปิดกล้อง
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-cyan-100 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+            <Camera size={24} className="text-blue-600 relative z-10" /> 
+            <span className="relative z-10">เปิดกล้องใช้งาน</span>
           </button>
         </div>
       )}
       
-      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" playsInline muted />
+      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1] opacity-90" playsInline muted />
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
       
+      {cameraActive && (
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="w-full h-1 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent absolute top-0 animate-[scan_3s_linear_infinite]" />
+        </div>
+      )}
+
       {overlayText && cameraActive && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10 text-sm flex items-center gap-2">
-           <div className={`w-2 h-2 rounded-full ${overlayText.includes("ตรวจพบ") ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-           {overlayText}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2">
+           <div className="bg-slate-900/70 text-white px-6 py-2 rounded-full backdrop-blur-md border border-white/10 text-sm font-medium flex items-center gap-3 shadow-lg">
+             <div className="relative">
+               <div className={`w-2.5 h-2.5 rounded-full ${overlayText.includes("ตรวจพบ") ? "bg-emerald-400" : "bg-rose-500"}`} />
+               {overlayText.includes("ตรวจพบ") && <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />}
+             </div>
+             {overlayText}
+           </div>
         </div>
       )}
     </div>
@@ -236,7 +356,7 @@ function CameraView({ onLandmarks, overlayText, isRecording, showSkeleton = true
 function DataPage() {
   const [landmarks, setLandmarks] = useState(null);
   const [label, setLabel] = useState("");
-  const [status, setStatus] = useState("ready"); // ready, saving, success
+  const [status, setStatus] = useState("ready"); 
 
   const handleSave = async () => {
     if (!landmarks || !label) return;
@@ -247,79 +367,81 @@ function DataPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label, points: landmarks })
       });
-      
       if(!res.ok) throw new Error("API Error");
-
       setStatus("success");
       setTimeout(() => setStatus("ready"), 2000);
       setLabel("");
     } catch (e) {
-      alert("เกิดข้อผิดพลาด: ไม่สามารถเชื่อมต่อ Backend ได้ (ตรวจสอบว่ารัน Server หรือยัง)");
+      alert("ไม่สามารถเชื่อมต่อ Server ได้");
       setStatus("ready");
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 flex flex-col lg:flex-row gap-8 animate-fade-in-up">
-      <div className="flex-1">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-4">
-           <h2 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
-             <Camera size={18} /> ภาพจากกล้อง
-           </h2>
-           <CameraView 
-             onLandmarks={setLandmarks} 
-             isRecording={status === "saving"}
-             // แสดงสถานะว่าเจอกี่มือ (1 หรือ 2)
-             overlayText={landmarks ? `ตรวจพบ ${landmarks.length / 63} มือ` : "กรุณายกมือ"}
-           />
+    <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-10 animate-fade-in">
+      <div className="flex-1 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+           <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+             <Camera size={24} />
+           </div>
+           <h2 className="text-2xl font-bold text-slate-800">มุมมองกล้อง</h2>
         </div>
+        <CameraView 
+          onLandmarks={setLandmarks} 
+          isRecording={status === "saving"}
+          overlayText={landmarks ? `ตรวจพบ ${landmarks.length / 63} มือ` : "กรุณายกมือ"}
+        />
       </div>
       
-      <div className="lg:w-80 space-y-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-6">
-          <div>
-             <h2 className="text-xl font-bold flex items-center gap-2 mb-1">
-              <Database className="text-blue-500" />
-              สอนท่ามือใหม่
-            </h2>
-            <p className="text-xs text-gray-500">รองรับทั้ง 1 และ 2 มือ</p>
-          </div>
+      <div className="lg:w-96 flex flex-col justify-center">
+        <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-10 -mt-10 blur-2xl opacity-50" />
           
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              ชื่อท่าทาง (Label)
-            </label>
-            <input 
-              type="text" 
-              value={label}
-              onChange={e => setLabel(e.target.value)}
-              placeholder="เช่น ปวดหัว, รัก..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            />
-          </div>
+          <div className="relative z-10 space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800">
+                <Database className="text-blue-500" />
+                สอนท่ามือ
+              </h2>
+              <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+                ทำท่าทางค้างไว้หน้ากล้อง แล้วตั้งชื่อท่าทางนั้นเพื่อบันทึกลงฐานข้อมูล
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1">ชื่อท่าทาง (Label)</label>
+                <input 
+                  type="text" 
+                  value={label}
+                  onChange={e => setLabel(e.target.value)}
+                  placeholder="เช่น ปวดหัว, รัก..."
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-400"
+                />
+              </div>
 
-          <button 
-            onClick={handleSave}
-            disabled={!landmarks || !label || status === "saving"}
-            className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-lg transition-all shadow-lg ${
-              status === "success" 
-                ? "bg-green-500 text-white shadow-green-500/30" 
-                : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
-            }`}
-          >
-            {status === "saving" && <Loader2 className="animate-spin" />}
-            {status === "success" && <CheckCircle />}
-            {status === "ready" && <Save size={20} />}
-            {status === "success" ? "บันทึกเรียบร้อย!" : "บันทึกข้อมูล"}
-          </button>
-          
-          <div className="text-xs text-gray-500 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <strong>คำแนะนำ:</strong> 
-            <ol className="list-decimal list-inside mt-2 space-y-1">
-              <li>ทำท่าทางค้างไว้ (มือเดียวหรือสองมือก็ได้)</li>
-              <li>ตั้งชื่อท่าทางนั้น</li>
-              <li>กดปุ่มบันทึก</li>
-            </ol>
+              <button 
+                onClick={handleSave}
+                disabled={!landmarks || !label || status === "saving"}
+                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-lg transition-all transform active:scale-95 ${
+                  status === "success" 
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
+                    : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+                }`}
+              >
+                {status === "saving" && <Loader2 className="animate-spin" />}
+                {status === "success" && <CheckCircle />}
+                {status === "ready" && <Save size={20} />}
+                {status === "success" ? "บันทึกเรียบร้อย" : "บันทึกข้อมูล"}
+              </button>
+            </div>
+
+            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 text-sm text-blue-700/80">
+              <div className="flex gap-3">
+                 <div className="mt-0.5"><Brain size={16} /></div>
+                 <p>ระบบรองรับการจำท่าทางทั้งแบบ <strong>มือเดียว</strong> และ <strong>สองมือ</strong> โดยอัตโนมัติ</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -331,13 +453,10 @@ function PredictPage() {
   const [result, setResult] = useState({ label: "...", confidence: 0 });
   const [isPredicting, setIsPredicting] = useState(false);
   const [error, setError] = useState(false);
-  
   const lastSentRef = useRef(0);
 
   const handleLandmarks = async (points) => {
     if (!points) return;
-    
-    // ส่งข้อมูลทุกๆ 300ms
     const now = Date.now();
     if (now - lastSentRef.current < 300) return;
     lastSentRef.current = now;
@@ -349,9 +468,7 @@ function PredictPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ points })
       });
-      
       if (!res.ok) throw new Error("Failed");
-
       const data = await res.json();
       setResult(data);
       setError(false);
@@ -363,11 +480,11 @@ function PredictPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6 animate-fade-in">
-      
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-200">
-          <ServerCrash size={16} /> ไม่สามารถเชื่อมต่อกับ Server ได้ ({API_URL})
+        <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl flex items-center gap-3 text-sm border border-rose-100 shadow-sm animate-pulse">
+          <ServerCrash size={20} /> 
+          <span className="font-medium">ไม่สามารถเชื่อมต่อ Server ได้ - กรุณาตรวจสอบการเชื่อมต่อ</span>
         </div>
       )}
 
@@ -378,44 +495,43 @@ function PredictPage() {
           showSkeleton={true}
         />
         
-        {/* Floating Result Card */}
-        <div className="absolute -bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 md:bottom-6 bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-6 border border-white/50 transition-all">
-           <div className="flex justify-between items-start mb-2">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">ผลลัพธ์ (Translation)</span>
-              {isPredicting ? (
-                <RefreshCw size={14} className="text-blue-500 animate-spin" />
-              ) : (
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-              )}
-           </div>
-           
-           <h2 className={`text-4xl font-extrabold mb-3 truncate ${result.confidence > 0.7 ? "text-blue-600" : "text-gray-400"}`}>
-             {result.label}
-           </h2>
-           
-           <div className="space-y-1">
-             <div className="flex justify-between text-xs text-gray-500">
-               <span>ความมั่นใจ</span>
-               <span>{(result.confidence * 100).toFixed(0)}%</span>
+        <div className="absolute -bottom-10 left-4 right-4 md:left-auto md:right-8 md:bottom-8 md:w-96">
+           <div className="bg-white/90 backdrop-blur-xl shadow-2xl shadow-slate-900/10 rounded-3xl p-6 border border-white/50 relative overflow-hidden transition-all hover:scale-105 duration-300">
+             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-cyan-400" />
+             
+             <div className="flex justify-between items-start mb-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Activity size={12} className="text-blue-500" />
+                  ผลลัพธ์การแปล
+                </span>
+                {isPredicting ? (
+                  <RefreshCw size={16} className="text-blue-500 animate-spin" />
+                ) : (
+                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                )}
              </div>
-             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-               <div 
-                 className={`h-full transition-all duration-300 ${result.confidence > 0.7 ? "bg-blue-500" : "bg-gray-400"}`}
-                 style={{ width: `${result.confidence * 100}%` }}
-               />
+             
+             <h2 className={`text-5xl font-extrabold mb-4 truncate tracking-tight ${result.confidence > 0.7 ? "text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500" : "text-slate-300"}`}>
+               {result.label}
+             </h2>
+             
+             <div className="space-y-2">
+               <div className="flex justify-between text-xs font-medium text-slate-500">
+                 <span>ความมั่นใจ (Confidence)</span>
+                 <span className="font-mono">{(result.confidence * 100).toFixed(0)}%</span>
+               </div>
+               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200/50">
+                 <div 
+                   className={`h-full transition-all duration-500 ease-out rounded-full ${
+                     result.confidence > 0.8 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
+                     result.confidence > 0.5 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
+                     "bg-slate-300"
+                   }`}
+                   style={{ width: `${result.confidence * 100}%` }}
+                 />
+               </div>
              </div>
            </div>
-        </div>
-      </div>
-      
-      <div className="pt-8">
-        <h3 className="text-gray-500 font-medium mb-3 text-sm">ตัวอย่างคำศัพท์ที่ระบบรู้จัก (ถ้าบันทึกแล้ว)</h3>
-        <div className="flex flex-wrap gap-2">
-          {["ปวดหัว", "เจ็บหน้าอก", "เวียนหัว", "หายใจไม่ออก", "สวัสดี", "ขอบคุณ"].map(word => (
-            <div key={word} className="px-4 py-2 bg-white rounded-lg text-gray-600 border border-gray-200 text-sm shadow-sm">
-              {word}
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -426,11 +542,12 @@ export default function App() {
   const [page, setPage] = useState("home");
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-gray-900 pb-20">
+    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900 pb-20 pt-16 selection:bg-blue-100 selection:text-blue-900">
       <Navbar page={page} setPage={setPage} />
-      <main className="pt-6">
+      <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
         {page === "data" && <DataPage />}
+        {page === "dictionary" && <DictionaryPage />} {/* หน้าใหม่ */}
         {page === "predict" && <PredictPage />}
       </main>
     </div>
