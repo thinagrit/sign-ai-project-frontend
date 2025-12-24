@@ -11,7 +11,7 @@ import {
 // ⚙️ ตั้งค่าการเชื่อมต่อ
 // ==============================================
 // เปลี่ยน URL นี้เป็นของ Render ที่คุณได้มา (ไม่มี / ต่อท้าย)
-const API_URL = "https://your-project-name.onrender.com"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 // ==============================================
 
 // --- Components ---
