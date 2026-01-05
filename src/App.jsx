@@ -46,14 +46,13 @@ function HomePage({ setPage }) {
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 text-center space-y-12 animate-fade-in-up">
       <div className="space-y-6">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium">
-          <HeartPulse size={16} /> บันทึกท่าทางแบบเคลื่อนไหว (Video Sequence)
+          <HeartPulse size={16} /> บันทึกท่าทางแบบเคลื่อนไหว (60 Frames Sequence)
         </div>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-tight">
           ระบบเก็บข้อมูล<br/><span className="text-blue-600">ท่าทางภาษามือ</span>
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
-          AI จะเรียนรู้จากการเคลื่อนไหวต่อเนื่อง ช่วยให้การแปลผลมีความแม่นยำสูงขึ้น 
-          รองรับท่าทางทางการแพทย์ที่ซับซอย
+          เพิ่มความแม่นยำด้วยการบันทึก 60 เฟรมต่อเนื่อง เพื่อท่าทางที่สมบูรณ์แบบ
         </p>
       </div>
       <div className="flex gap-4">
@@ -65,7 +64,6 @@ function HomePage({ setPage }) {
   );
 }
 
-// Hook สำหรับตรวจจับมือ
 const useHandTracking = (videoRef, onResults) => {
   const [loading, setLoading] = useState(true);
   const landmarkerRef = useRef(null);
@@ -165,13 +163,13 @@ function CameraView({ onLandmarks, isRecording, recordingProgress }) {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
       
       {isRecording && (
-        <div className="absolute bottom-6 left-6 right-6 z-30 space-y-2">
-          <div className="flex justify-between text-white text-xs font-bold uppercase tracking-widest">
-            <span>กำลังบันทึกท่าทาง...</span>
+        <div className="absolute bottom-6 left-6 right-6 z-30 space-y-2 text-white drop-shadow-md">
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-[0.2em]">
+            <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> Recording 60 Frames</span>
             <span>{recordingProgress}%</span>
           </div>
-          <div className="w-full h-3 bg-white/20 backdrop-blur-md rounded-full overflow-hidden border border-white/10">
-            <div className="h-full bg-red-500 transition-all duration-100 ease-linear" style={{ width: `${recordingProgress}%` }} />
+          <div className="w-full h-2 bg-white/20 backdrop-blur-md rounded-full overflow-hidden border border-white/10">
+            <div className="h-full bg-red-500 transition-all duration-75 ease-linear" style={{ width: `${recordingProgress}%` }} />
           </div>
         </div>
       )}
@@ -182,12 +180,14 @@ function CameraView({ onLandmarks, isRecording, recordingProgress }) {
 function DataPage() {
   const [currentLandmarks, setCurrentLandmarks] = useState(null);
   const [label, setLabel] = useState("");
-  const [status, setStatus] = useState("ready"); // ready, countdown, recording, saving, success
+  const [status, setStatus] = useState("ready");
   const [countdown, setCountdown] = useState(0);
   const [videoBuffer, setVideoBuffer] = useState([]);
-  const recordingProgress = (videoBuffer.length / 60) * 100; // สมมติเก็บ 60 เฟรม
+  
+  // ปรับเป็น 60 เฟรม
+  const MAX_FRAMES = 60;
+  const recordingProgress = (videoBuffer.length / MAX_FRAMES) * 100;
 
-  // ฟังก์ชันเริ่มกระบวนการบันทึก
   const startRecordingFlow = () => {
     if (!label) return alert("กรุณาระบุชื่อท่าทาง");
     setCountdown(3);
@@ -195,7 +195,6 @@ function DataPage() {
     setVideoBuffer([]);
   };
 
-  // จัดการตัวเลขถอยหลัง
   useEffect(() => {
     if (status === "countdown" && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -205,14 +204,12 @@ function DataPage() {
     }
   }, [status, countdown]);
 
-  // จัดการการบันทึกเฟรม (เมื่อสถานะเป็น recording)
   useEffect(() => {
     if (status === "recording") {
-      if (videoBuffer.length < 60) {
+      if (videoBuffer.length < MAX_FRAMES) {
         if (currentLandmarks) {
           setVideoBuffer(prev => [...prev, currentLandmarks]);
         } else {
-          // หากไม่พบมือในบางเฟรม ให้ใส่ค่าว่างหรือข้าม
           setVideoBuffer(prev => [...prev, []]); 
         }
       } else {
@@ -224,13 +221,12 @@ function DataPage() {
   const handleSave = async () => {
     setStatus("saving");
     try {
-      // ส่งข้อมูลแบบ Sequence (Array ของ Landmark)
       const res = await fetch(`${API_URL}/upload_video`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           label: label, 
-          sequence: videoBuffer // ส่งเฟรมทั้งหมดไป
+          sequence: videoBuffer 
         })
       });
       if(!res.ok) throw new Error("API Error");
@@ -239,7 +235,7 @@ function DataPage() {
       setLabel("");
       setVideoBuffer([]);
     } catch (e) {
-      alert("ไม่สามารถบันทึกได้ โปรดตรวจสอบ Backend (/upload_video)");
+      alert("ไม่สามารถบันทึกได้ โปรดตรวจสอบการเชื่อมต่อ");
       setStatus("ready");
     }
   };
@@ -264,10 +260,10 @@ function DataPage() {
       <div className="lg:w-96">
         <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
           <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800">
-            <Video className="text-blue-500" /> สอนท่ามือแบบวีดิโอ
+            <Video className="text-blue-500" /> สอนท่ามือ (60 เฟรม)
           </h2>
           <p className="text-slate-500 text-sm">
-            ระบบจะบันทึกการเคลื่อนไหว 30 เฟรม (ประมาณ 2-3 วินาที) เพื่อใช้ในการเทรน AI แบบเคลื่อนไหว
+            บันทึกการเคลื่อนไหวต่อเนื่อง 60 เฟรม เพื่อให้ AI จดจำท่าทางได้ละเอียดและแม่นยำขึ้น
           </p>
 
           <div className="space-y-4">
@@ -295,15 +291,15 @@ function DataPage() {
               {status === "countdown" && <Timer className="animate-spin" />}
               {status === "recording" && <div className="w-3 h-3 bg-white rounded-full animate-pulse" />}
               {status === "saving" && <Loader2 className="animate-spin" />}
-              {status === "success" ? "บันทึกวีดิโอสำเร็จ!" : 
+              {status === "success" ? "บันทึกสำเร็จ!" : 
                status === "countdown" ? `เริ่มใน ${countdown}...` :
-               status === "recording" ? "กำลังบันทึก..." : 
-               status === "saving" ? "กำลังประมวลผล..." : "กดเพื่อเริ่มบันทึก"}
+               status === "recording" ? `กำลังบันทึก ${videoBuffer.length}/60` : 
+               status === "saving" ? "กำลังประมวลผล..." : "เริ่มบันทึก 60 เฟรม"}
             </button>
           </div>
 
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-700 leading-relaxed">
-            <strong>คำแนะนำ:</strong> เมื่อกดปุ่ม ระบบจะนับถอยหลัง 3 วินาที ให้คุณเริ่มทำท่าทางทันทีจนกว่าแถบสีแดงจะเต็ม
+          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-xs text-blue-700 leading-relaxed">
+            <strong>คำแนะนำ:</strong> เมื่อเริ่มบันทึก ให้ขยับมือทำท่าทางอย่างช้าๆ จนกว่าแถบสีแดงจะเต็มหน้าจอ
           </div>
         </div>
       </div>
