@@ -208,7 +208,7 @@ function DataPage() {
   // จัดการการบันทึกเฟรม (เมื่อสถานะเป็น recording)
   useEffect(() => {
     if (status === "recording") {
-      if (videoBuffer.length < 30) {
+      if (videoBuffer.length < 60) {
         if (currentLandmarks) {
           setVideoBuffer(prev => [...prev, currentLandmarks]);
         } else {
