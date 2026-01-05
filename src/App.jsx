@@ -185,7 +185,7 @@ function DataPage() {
   const [status, setStatus] = useState("ready"); // ready, countdown, recording, saving, success
   const [countdown, setCountdown] = useState(0);
   const [videoBuffer, setVideoBuffer] = useState([]);
-  const recordingProgress = (videoBuffer.length / 30) * 100; // สมมติเก็บ 30 เฟรม
+  const recordingProgress = (videoBuffer.length / 60) * 100; // สมมติเก็บ 60 เฟรม
 
   // ฟังก์ชันเริ่มกระบวนการบันทึก
   const startRecordingFlow = () => {
