@@ -5,17 +5,17 @@ import {
   Home as HomeIcon, Database, Activity, 
   CheckCircle, RefreshCw, ServerCrash,
   BookOpen, HeartPulse, Brain, Video, Timer,
-  ChevronRight, Info
+  ChevronRight, Info, WifiOff, Wifi
 } from "lucide-react";
 
 // ==============================================
-// ⚙️ Configuration (Update URL for Production)
+// ⚙️ Configuration (สำคัญ: ต้องตรงกับ Port ของ Backend)
 // ==============================================
-const API_URL = "https://sign-ai-project-backend.onrender.com"; 
-const MAX_FRAMES = 60; // จำนวนเฟรมที่ใช้ต่อ 1 ท่าทาง
+const API_URL = "http://localhost:8000"; 
+const MAX_FRAMES = 60; // จำนวนเฟรมที่ Model ต้องการ
 // ==============================================
 
-function Navbar({ page, setPage }) {
+function Navbar({ page, setPage, isBackendOnline }) {
   const menus = [
     { id: "home", label: "หน้าหลัก", icon: <HomeIcon size={18} /> },
     { id: "data", label: "เพิ่มข้อมูล (60 FPS)", icon: <Database size={18} /> },
@@ -31,18 +31,18 @@ function Navbar({ page, setPage }) {
           </div>
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">ThaiMedAI</span>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-xl">
-          {menus.map((m) => (
-            <button 
-              key={m.id} 
-              onClick={() => setPage(m.id)} 
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-semibold ${
-                page === m.id ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {m.icon} <span className="hidden sm:inline">{m.label}</span>
-            </button>
-          ))}
+        
+        <div className="flex items-center gap-4">
+          <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter ${isBackendOnline ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+            {isBackendOnline ? <><Wifi size={12}/> Server Online</> : <><WifiOff size={12}/> Server Offline</>}
+          </div>
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            {menus.map((m) => (
+              <button key={m.id} onClick={() => setPage(m.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-semibold ${page === m.id ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                {m.icon} <span className="hidden sm:inline">{m.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </nav>
@@ -57,11 +57,11 @@ function HomePage({ setPage }) {
           <Brain size={14} /> AI-Powered Medical Sign Language
         </div>
         <h1 className="text-5xl md:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-          แปลภาษามือทางการแพทย์<br/><span className="text-blue-600">ด้วยระบบ AI แปลภาษามือ</span>
+          สื่อสารไร้พรมแดน<br/><span className="text-blue-600">ด้วยระบบแปลภาษามือ</span>
         </h1>
-        <p className="text-lg text-slate-500 max-w-xl mx-auto font-medium">
-          บันทึกและแปลท่าทางภาษามือทางการแพทย์แบบ 60 เฟรมต่อเนื่อง 
-          เพื่อความแม่นยำสูงสุดในการวินิจฉัย
+        <p className="text-lg text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
+          บันทึกและแปลท่าทางภาษามือทางการแพทย์แบบ 60 เฟรมต่อเนื่อง <br/>
+          ตรวจสอบความพร้อมของ Backend ก่อนเริ่มใช้งาน
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -97,7 +97,7 @@ const useHandTracking = (videoRef, onResults) => {
           landmarkerRef.current = landmarker;
           setLoading(false);
         }
-      } catch(e) { console.error(e); }
+      } catch(e) { console.error("MediaPipe Error:", e); }
     })();
     return () => { isMounted = false; };
   }, []);
@@ -141,10 +141,12 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
           ctx.fill();
         }
       }
-      const flatPoints = results.landmarks.flatMap(hand => hand.flatMap(p => [p.x, p.y, p.z]));
+      // ดึงข้อมูล 21 จุด x,y,z (รวม 63 ค่าต่อมือ)
+      // กรณีนี้เราส่งเฉพาะมือแรกที่เจอเพื่อความแม่นยำของ Model เบื้องต้น
+      const flatPoints = results.landmarks[0].flatMap(p => [p.x, p.y, p.z]);
       onLandmarks(flatPoints);
     } else {
-      onLandmarks(null);
+      onLandmarks(new Array(63).fill(0)); // ถ้าไม่เจอมือ ให้ส่งค่า 0 ไปแทนเพื่อให้ Sequence ครบ 60 เฟรม
     }
     ctx.restore();
   });
@@ -158,7 +160,7 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
         setCameraActive(true);
         startLoop();
       };
-    } catch (e) { alert("ไม่สามารถเปิดกล้องได้"); }
+    } catch (e) { alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึงกล้อง"); }
   };
 
   return (
@@ -170,10 +172,11 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
         </div>
       )}
       {!loading && !cameraActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-900/80 backdrop-blur-sm space-y-4">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-900/80 backdrop-blur-sm space-y-4 text-center px-4">
           <div className="bg-blue-600/20 p-4 rounded-full">
             <Camera size={40} className="text-blue-500" />
           </div>
+          <p className="text-white font-medium max-w-xs">พร้อมสำหรับตรวจจับท่าทางภาษามือ</p>
           <button onClick={startCamera} className="px-8 py-3 bg-white text-slate-900 rounded-full font-bold shadow-xl hover:scale-105 transition-all">
             เปิดกล้องเพื่อเริ่มใช้งาน
           </button>
@@ -225,7 +228,9 @@ function DataPage() {
   useEffect(() => {
     if (status === "recording") {
       if (videoBuffer.length < MAX_FRAMES) {
-        setVideoBuffer(prev => [...prev, currentLandmarks || []]);
+        if (currentLandmarks) {
+          setVideoBuffer(prev => [...prev, currentLandmarks]);
+        }
       } else {
         handleSave();
       }
@@ -246,7 +251,7 @@ function DataPage() {
       setLabel("");
       setVideoBuffer([]);
     } catch (e) {
-      alert("ไม่สามารถเชื่อมต่อ Backend ได้");
+      alert("❌ ไม่สามารถบันทึกได้: ตรวจสอบการเชื่อมต่อ Backend");
       setStatus("ready");
     }
   };
@@ -264,30 +269,19 @@ function DataPage() {
       <div className="lg:w-96 space-y-6">
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Database className="text-blue-500" /> สอนท่ามือใหม่</h2>
-          <p className="text-slate-400 text-sm mb-6">บันทึกวิดีโอ 60 เฟรม เพื่อสร้างฐานข้อมูลให้ AI</p>
           <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">ชื่อคำศัพท์</label>
-              <input 
-                className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 font-semibold" 
-                placeholder="เช่น ปวดท้อง" value={label} onChange={e => setLabel(e.target.value)} disabled={status !== "ready"}
-              />
-            </div>
+            <input 
+              className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 font-semibold text-slate-700" 
+              placeholder="ชื่อคำศัพท์" value={label} onChange={e => setLabel(e.target.value)} disabled={status !== "ready"}
+            />
             <button 
               onClick={startRecordingFlow} disabled={status !== "ready"}
               className={`w-full py-4 rounded-xl font-bold transition-all text-white flex items-center justify-center gap-2 ${
-                status === "recording" ? "bg-red-500 animate-pulse" : 
-                status === "success" ? "bg-green-500" : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100"
+                status === "recording" ? "bg-red-500 animate-pulse" : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {status === "ready" ? <><Video size={18}/> เริ่มบันทึก 60 เฟรม</> : 
-               status === "recording" ? `กำลังบันทึก ${videoBuffer.length}/${MAX_FRAMES}` : 
-               status === "saving" ? <Loader2 className="animate-spin" /> : "บันทึกเรียบร้อย!"}
+              {status === "ready" ? "เริ่มบันทึก 60 เฟรม" : `บันทึกอยู่ ${videoBuffer.length}/${MAX_FRAMES}`}
             </button>
-          </div>
-          <div className="mt-6 flex gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-700 text-xs">
-            <Info size={16} className="shrink-0" />
-            <p><strong>ทิป:</strong> เมื่อเริ่มบันทึก ให้ขยับมือทำท่าทางอย่างช้าๆ ให้จบภายใน 2-3 วินาที</p>
           </div>
         </div>
       </div>
@@ -317,7 +311,7 @@ function PredictPage() {
         setResult(data);
       }
     } catch (e) {
-      console.error("Prediction failed");
+      // Error handled silently for better UX
     } finally {
       setIsPredicting(false);
       isPredictingRef.current = false;
@@ -326,9 +320,12 @@ function PredictPage() {
 
   const handleLandmarks = (points) => {
     setSequenceBuffer(prev => {
-      const newBuffer = [...prev, points || []];
-      if (newBuffer.length > MAX_FRAMES) {
-        const slicedBuffer = newBuffer.slice(1);
+      // ถ้า points เป็น null ให้ใช้ array 0 (63 ตัว)
+      const dataPoint = points || new Array(63).fill(0);
+      const newBuffer = [...prev, dataPoint];
+      
+      if (newBuffer.length >= MAX_FRAMES) {
+        const slicedBuffer = newBuffer.slice(-MAX_FRAMES);
         if (!isPredictingRef.current) {
            predictSequence(slicedBuffer);
         }
@@ -345,32 +342,17 @@ function PredictPage() {
         <div className="absolute -bottom-12 left-4 right-4 md:right-8 md:bottom-8 md:w-96 z-40">
            <div className="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-6 border-t-4 border-t-blue-500 border border-slate-100">
              <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Activity size={14} className="text-blue-500" /> AI ผลการวิเคราะห์
-                </span>
-                {isPredicting && <div className="flex gap-1"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" /><div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]" /></div>}
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">AI Result</span>
+                {isPredicting && <Loader2 className="animate-spin text-blue-500 w-4 h-4" />}
              </div>
-             <h2 className="text-5xl font-black mb-4 text-slate-900 truncate">
-               {sequenceBuffer.length < MAX_FRAMES ? `Loading ${sequenceBuffer.length}/60` : result.label}
+             <h2 className="text-4xl font-black mb-4 text-slate-900">
+               {sequenceBuffer.length < MAX_FRAMES ? `กำลังเตรียมเฟรม (${sequenceBuffer.length}/60)` : result.label}
              </h2>
-             <div className="space-y-1.5">
-               <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
-                 <span>Confidence</span>
-                 <span>{(result.confidence * 100).toFixed(0)}%</span>
-               </div>
-               <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                 <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500" style={{ width: `${result.confidence * 100}%` }} />
-               </div>
+             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${result.confidence * 100}%` }} />
              </div>
            </div>
         </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12">
-        {["ปวดหัว", "เจ็บหน้าอก", "เวียนหัว", "หายใจไม่ออก"].map(word => (
-          <div key={word} className="px-4 py-3 bg-white rounded-2xl border border-slate-100 text-slate-500 text-center text-sm font-bold shadow-sm">
-            {word}
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -378,9 +360,25 @@ function PredictPage() {
 
 export default function App() {
   const [page, setPage] = useState("home");
+  const [isBackendOnline, setIsBackendOnline] = useState(false);
+
+  useEffect(() => {
+    const checkServer = async () => {
+      try {
+        const res = await fetch(`${API_URL}/`);
+        setIsBackendOnline(res.ok);
+      } catch (e) {
+        setIsBackendOnline(false);
+      }
+    };
+    checkServer();
+    const interval = setInterval(checkServer, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 pt-16 selection:bg-blue-100 selection:text-blue-900">
-      <Navbar page={page} setPage={setPage} />
+    <div className="min-h-screen bg-slate-50 pt-16">
+      <Navbar page={page} setPage={setPage} isBackendOnline={isBackendOnline} />
       <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
         {page === "data" && <DataPage />}
