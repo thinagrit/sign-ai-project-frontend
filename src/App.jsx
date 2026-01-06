@@ -11,7 +11,7 @@ import {
 // ==============================================
 // ⚙️ Configuration (สำคัญ: ต้องตรงกับ Port ของ Backend)
 // ==============================================
-const API_URL = "http://localhost:8000"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 const MAX_FRAMES = 60; // จำนวนเฟรมที่ Model ต้องการ
 // ==============================================
 
