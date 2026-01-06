@@ -57,7 +57,7 @@ function HomePage({ setPage }) {
           <Brain size={14} /> AI-Powered Medical Sign Language
         </div>
         <h1 className="text-5xl md:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-          สื่อสารไร้พรมแดน<br/><span className="text-blue-600">ด้วยระบบแปลภาษามือ</span>
+          แปลภาษามือทางการแพทย์<br/><span className="text-blue-600">ด้วยระบบ AI แปลภาษามือ</span>
         </h1>
         <p className="text-lg text-slate-500 max-w-xl mx-auto font-medium">
           บันทึกและแปลท่าทางภาษามือทางการแพทย์แบบ 60 เฟรมต่อเนื่อง 
