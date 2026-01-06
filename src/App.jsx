@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { 
   Loader2, Camera, Hand, Database, Activity, 
-  Home as HomeIcon, ChevronRight, Brain, WifiOff, Wifi
+  Home as HomeIcon, ChevronRight, Brain, WifiOff, Wifi, Save, CheckCircle2
 } from "lucide-react";
 
 // ==============================================
@@ -61,8 +61,11 @@ function HomePage({ setPage }) {
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-        <button onClick={() => setPage("predict")} className="flex-1 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+        <button onClick={() => setPage("predict")} className="flex-1 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 text-lg">
           เริ่มแปล Real-time <ChevronRight size={18} />
+        </button>
+        <button onClick={() => setPage("data")} className="flex-1 px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-lg">
+          เพิ่มฐานข้อมูล
         </button>
       </div>
     </div>
@@ -106,7 +109,7 @@ const useHandTracking = (videoRef, onResults) => {
   return { loading, startLoop: processVideo };
 };
 
-function CameraView({ onLandmarks, isPredicting }) {
+function CameraView({ onLandmarks, isActionActive }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -130,7 +133,7 @@ function CameraView({ onLandmarks, isPredicting }) {
         for (let p of hand) {
           ctx.beginPath();
           ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-          ctx.fillStyle = isPredicting ? "#3B82F6" : "#22C55E";
+          ctx.fillStyle = isActionActive ? "#3B82F6" : "#22C55E";
           ctx.fill();
         }
       }
@@ -176,6 +179,75 @@ function CameraView({ onLandmarks, isPredicting }) {
   );
 }
 
+function DataPage() {
+  const [label, setLabel] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [status, setStatus] = useState("พร้อมบันทึก");
+  const sequenceRef = useRef([]);
+
+  const handleLandmarks = async (points) => {
+    if (!isRecording || !points) return;
+
+    sequenceRef.current.push(points);
+    setStatus(`กำลังบันทึก... (${sequenceRef.current.length}/60)`);
+
+    if (sequenceRef.current.length >= 60) {
+      setIsRecording(false);
+      const dataToUpload = [...sequenceRef.current];
+      sequenceRef.current = [];
+      
+      try {
+        setStatus("กำลังอัพโหลด...");
+        const res = await fetch(`${API_URL}/upload_video`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label, sequence: dataToUpload })
+        });
+        if (res.ok) setStatus("บันทึกสำเร็จ!");
+        else setStatus("อัพโหลดล้มเหลว");
+      } catch (e) {
+        setStatus("ติดต่อ Server ไม่ได้");
+      }
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
+        <div className="flex-1 space-y-2">
+          <label className="text-sm font-bold text-slate-500 ml-1">ชื่อท่าทาง (ภาษาไทย)</label>
+          <input 
+            type="text" 
+            value={label} 
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="เช่น ปวดหัว, เจ็บท้อง..."
+            className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+          />
+        </div>
+        <button 
+          disabled={!label || isRecording}
+          onClick={() => {
+            sequenceRef.current = [];
+            setIsRecording(true);
+          }}
+          className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-100"
+        >
+          {isRecording ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+          {isRecording ? "กำลังบันทึก" : "เริ่มบันทึก 60 เฟรม"}
+        </button>
+      </div>
+
+      <div className="relative">
+        <CameraView onLandmarks={handleLandmarks} isActionActive={isRecording} />
+        <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-bold flex items-center gap-2">
+          {isRecording ? <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> : <CheckCircle2 size={16} className="text-green-400" />}
+          {status}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PredictPage() {
   const [result, setResult] = useState({ label: "รอตรวจจับ...", confidence: 0 });
   const [isPredicting, setIsPredicting] = useState(false);
@@ -185,8 +257,7 @@ function PredictPage() {
     if (!points) return;
     
     const now = Date.now();
-    // หน่วงเวลาการส่งข้อมูล (Throttle) เช่น ส่งทุกๆ 100ms (10 ครั้งต่อวินาที) เพื่อความ Real-time ที่ไม่หนักเครื่อง
-    if (now - lastSentTime.current < 100) return;
+    if (now - lastSentTime.current < 200) return; // ส่งทุกๆ 200ms
     lastSentTime.current = now;
 
     setIsPredicting(true);
@@ -210,7 +281,7 @@ function PredictPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
       <div className="relative">
-        <CameraView onLandmarks={handleLandmarks} isPredicting={isPredicting} />
+        <CameraView onLandmarks={handleLandmarks} isActionActive={isPredicting} />
         <div className="absolute -bottom-12 left-4 right-4 md:right-8 md:bottom-8 md:w-96 z-40">
            <div className="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-6 border-t-4 border-t-blue-500 border border-slate-100">
              <div className="flex justify-between items-center mb-2">
@@ -251,6 +322,7 @@ export default function App() {
       <Navbar page={page} setPage={setPage} isBackendOnline={isBackendOnline} />
       <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
+        {page === "data" && <DataPage />}
         {page === "predict" && <PredictPage />}
       </main>
     </div>
