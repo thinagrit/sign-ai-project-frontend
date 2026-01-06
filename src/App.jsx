@@ -229,6 +229,7 @@ function DataPage() {
           onClick={() => {
             sequenceRef.current = [];
             setIsRecording(true);
+            setStatus("กำลังเริ่มบันทึก...");
           }}
           className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-100"
         >
@@ -257,7 +258,7 @@ function PredictPage() {
     if (!points) return;
     
     const now = Date.now();
-    if (now - lastSentTime.current < 200) return; // ส่งทุกๆ 200ms
+    if (now - lastSentTime.current < 200) return; // ส่งทุกๆ 200ms เพื่อความลื่นไหล
     lastSentTime.current = now;
 
     setIsPredicting(true);
@@ -313,7 +314,7 @@ export default function App() {
       }
     };
     checkServer();
-    const interval = setInterval(checkServer, 5000);
+    const interval = setInterval(checkServer, 5000); // เช็คทุก 5 วินาที
     return () => clearInterval(interval);
   }, []);
 
