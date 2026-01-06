@@ -8,7 +8,7 @@ import {
 // ==============================================
 // ⚙️ Configuration
 // ==============================================
-const API_URL = "http://localhost:8000"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 // ==============================================
 
 function Navbar({ page, setPage, isBackendOnline }) {
