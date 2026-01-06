@@ -11,7 +11,7 @@ import {
 // ==============================================
 // ⚙️ Configuration (Update URL for Production)
 // ==============================================
-const API_URL = "http://localhost:8000"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 const MAX_FRAMES = 60; // จำนวนเฟรมที่ใช้ต่อ 1 ท่าทาง
 // ==============================================
 
