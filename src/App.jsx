@@ -1,24 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { 
-  Loader2, Camera, Hand, Save, Play, 
-  Home as HomeIcon, Database, Activity, 
-  CheckCircle, RefreshCw, ServerCrash,
-  BookOpen, HeartPulse, Brain, Video, Timer,
-  ChevronRight, Info, WifiOff, Wifi
+  Loader2, Camera, Hand, Database, Activity, 
+  Home as HomeIcon, ChevronRight, Brain, WifiOff, Wifi
 } from "lucide-react";
 
 // ==============================================
-// ⚙️ Configuration (สำคัญ: ต้องตรงกับ Port ของ Backend)
+// ⚙️ Configuration
 // ==============================================
-const API_URL = "https://sign-ai-project-backend.onrender.com"; 
-const MAX_FRAMES = 60; // จำนวนเฟรมที่ Model ต้องการ
+const API_URL = "http://localhost:8000"; 
 // ==============================================
 
 function Navbar({ page, setPage, isBackendOnline }) {
   const menus = [
     { id: "home", label: "หน้าหลัก", icon: <HomeIcon size={18} /> },
-    { id: "data", label: "เพิ่มข้อมูล (60 FPS)", icon: <Database size={18} /> },
+    { id: "data", label: "บันทึกข้อมูล", icon: <Database size={18} /> },
     { id: "predict", label: "แปลภาษา Real-time", icon: <Activity size={18} /> },
   ];
 
@@ -60,16 +56,13 @@ function HomePage({ setPage }) {
           สื่อสารไร้พรมแดน<br/><span className="text-blue-600">ด้วยระบบแปลภาษามือ</span>
         </h1>
         <p className="text-lg text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-          บันทึกและแปลท่าทางภาษามือทางการแพทย์แบบ 60 เฟรมต่อเนื่อง <br/>
-          ตรวจสอบความพร้อมของ Backend ก่อนเริ่มใช้งาน
+          แปลท่าทางภาษามือทางการแพทย์แบบ Real-time เฟรมต่อเฟรม <br/>
+          รวดเร็ว แม่นยำ และตอบสนองทันที
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
         <button onClick={() => setPage("predict")} className="flex-1 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-          เริ่มแปลภาษา <ChevronRight size={18} />
-        </button>
-        <button onClick={() => setPage("data")} className="flex-1 px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-2xl font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-          สอนท่ามือใหม่
+          เริ่มแปล Real-time <ChevronRight size={18} />
         </button>
       </div>
     </div>
@@ -91,7 +84,7 @@ const useHandTracking = (videoRef, onResults) => {
             delegate: "GPU"
           },
           runningMode: "VIDEO",
-          numHands: 2
+          numHands: 1
         });
         if(isMounted) {
           landmarkerRef.current = landmarker;
@@ -113,7 +106,7 @@ const useHandTracking = (videoRef, onResults) => {
   return { loading, startLoop: processVideo };
 };
 
-function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting }) {
+function CameraView({ onLandmarks, isPredicting }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -137,16 +130,14 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
         for (let p of hand) {
           ctx.beginPath();
           ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-          ctx.fillStyle = isRecording ? "#EF4444" : isPredicting ? "#3B82F6" : "#22C55E";
+          ctx.fillStyle = isPredicting ? "#3B82F6" : "#22C55E";
           ctx.fill();
         }
       }
-      // ดึงข้อมูล 21 จุด x,y,z (รวม 63 ค่าต่อมือ)
-      // กรณีนี้เราส่งเฉพาะมือแรกที่เจอเพื่อความแม่นยำของ Model เบื้องต้น
       const flatPoints = results.landmarks[0].flatMap(p => [p.x, p.y, p.z]);
       onLandmarks(flatPoints);
     } else {
-      onLandmarks(new Array(63).fill(0)); // ถ้าไม่เจอมือ ให้ส่งค่า 0 ไปแทนเพื่อให้ Sequence ครบ 60 เฟรม
+      onLandmarks(null);
     }
     ctx.restore();
   });
@@ -160,7 +151,7 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
         setCameraActive(true);
         startLoop();
       };
-    } catch (e) { alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึงกล้อง"); }
+    } catch (e) { alert("ไม่สามารถเปิดกล้องได้"); }
   };
 
   return (
@@ -168,171 +159,52 @@ function CameraView({ onLandmarks, isRecording, recordingProgress, isPredicting 
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 bg-slate-900">
           <Loader2 className="animate-spin mb-4 text-blue-500 w-10 h-10" />
-          <p className="text-slate-400 font-medium">กำลังโหลดโมเดล AI...</p>
+          <p className="text-slate-400 font-medium">กำลังโหลด AI...</p>
         </div>
       )}
       {!loading && !cameraActive && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-900/80 backdrop-blur-sm space-y-4 text-center px-4">
-          <div className="bg-blue-600/20 p-4 rounded-full">
-            <Camera size={40} className="text-blue-500" />
-          </div>
-          <p className="text-white font-medium max-w-xs">พร้อมสำหรับตรวจจับท่าทางภาษามือ</p>
+          <Camera size={40} className="text-blue-500" />
           <button onClick={startCamera} className="px-8 py-3 bg-white text-slate-900 rounded-full font-bold shadow-xl hover:scale-105 transition-all">
-            เปิดกล้องเพื่อเริ่มใช้งาน
+            เปิดกล้อง
           </button>
         </div>
       )}
       <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" playsInline muted />
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
-      
-      {isRecording && (
-        <div className="absolute bottom-6 left-6 right-6 z-30 space-y-2 text-white">
-          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> Recording 60 Frames</span>
-            <span>{recordingProgress}%</span>
-          </div>
-          <div className="w-full h-2 bg-white/10 backdrop-blur-md rounded-full overflow-hidden border border-white/10">
-            <div className="h-full bg-red-500 transition-all duration-75 ease-linear" style={{ width: `${recordingProgress}%` }} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DataPage() {
-  const [currentLandmarks, setCurrentLandmarks] = useState(null);
-  const [label, setLabel] = useState("");
-  const [status, setStatus] = useState("ready");
-  const [countdown, setCountdown] = useState(0);
-  const [videoBuffer, setVideoBuffer] = useState([]);
-  
-  const recordingProgress = (videoBuffer.length / MAX_FRAMES) * 100;
-
-  const startRecordingFlow = () => {
-    if (!label) return alert("กรุณาระบุชื่อท่าทางก่อนบันทึก");
-    setCountdown(3);
-    setStatus("countdown");
-    setVideoBuffer([]);
-  };
-
-  useEffect(() => {
-    if (status === "countdown" && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (status === "countdown" && countdown === 0) {
-      setStatus("recording");
-    }
-  }, [status, countdown]);
-
-  useEffect(() => {
-    if (status === "recording") {
-      if (videoBuffer.length < MAX_FRAMES) {
-        if (currentLandmarks) {
-          setVideoBuffer(prev => [...prev, currentLandmarks]);
-        }
-      } else {
-        handleSave();
-      }
-    }
-  }, [currentLandmarks, status]);
-
-  const handleSave = async () => {
-    setStatus("saving");
-    try {
-      const res = await fetch(`${API_URL}/upload_video`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, sequence: videoBuffer })
-      });
-      if(!res.ok) throw new Error("Backend Error");
-      setStatus("success");
-      setTimeout(() => setStatus("ready"), 2000);
-      setLabel("");
-      setVideoBuffer([]);
-    } catch (e) {
-      alert("❌ ไม่สามารถบันทึกได้: ตรวจสอบการเชื่อมต่อ Backend");
-      setStatus("ready");
-    }
-  };
-
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8 animate-fade-in">
-      <div className="flex-1 space-y-4">
-        <div className="relative">
-          <CameraView onLandmarks={setCurrentLandmarks} isRecording={status === "recording"} recordingProgress={recordingProgress.toFixed(0)} />
-          {status === "countdown" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-md z-40 rounded-3xl text-white text-9xl font-black animate-pulse">{countdown}</div>
-          )}
-        </div>
-      </div>
-      <div className="lg:w-96 space-y-6">
-        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Database className="text-blue-500" /> สอนท่ามือใหม่</h2>
-          <div className="space-y-4">
-            <input 
-              className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 font-semibold text-slate-700" 
-              placeholder="ชื่อคำศัพท์" value={label} onChange={e => setLabel(e.target.value)} disabled={status !== "ready"}
-            />
-            <button 
-              onClick={startRecordingFlow} disabled={status !== "ready"}
-              className={`w-full py-4 rounded-xl font-bold transition-all text-white flex items-center justify-center gap-2 ${
-                status === "recording" ? "bg-red-500 animate-pulse" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {status === "ready" ? "เริ่มบันทึก 60 เฟรม" : `บันทึกอยู่ ${videoBuffer.length}/${MAX_FRAMES}`}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 function PredictPage() {
-  const [result, setResult] = useState({ label: "รอเริ่มการแปล...", confidence: 0 });
-  const [sequenceBuffer, setSequenceBuffer] = useState([]);
+  const [result, setResult] = useState({ label: "รอตรวจจับ...", confidence: 0 });
   const [isPredicting, setIsPredicting] = useState(false);
-  const isPredictingRef = useRef(false);
+  const lastSentTime = useRef(0);
 
-  const predictSequence = async (sequence) => {
-    if (isPredictingRef.current) return;
-    isPredictingRef.current = true;
+  const handleLandmarks = async (points) => {
+    if (!points) return;
+    
+    const now = Date.now();
+    // หน่วงเวลาการส่งข้อมูล (Throttle) เช่น ส่งทุกๆ 100ms (10 ครั้งต่อวินาที) เพื่อความ Real-time ที่ไม่หนักเครื่อง
+    if (now - lastSentTime.current < 100) return;
+    lastSentTime.current = now;
+
     setIsPredicting(true);
-
     try {
-      const res = await fetch(`${API_URL}/predict_video`, {
+      const res = await fetch(`${API_URL}/predict_realtime`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sequence })
+        body: JSON.stringify({ landmark: points })
       });
       if (res.ok) {
         const data = await res.json();
         setResult(data);
       }
     } catch (e) {
-      // Error handled silently for better UX
+      console.error("Predict error:", e);
     } finally {
       setIsPredicting(false);
-      isPredictingRef.current = false;
     }
-  };
-
-  const handleLandmarks = (points) => {
-    setSequenceBuffer(prev => {
-      // ถ้า points เป็น null ให้ใช้ array 0 (63 ตัว)
-      const dataPoint = points || new Array(63).fill(0);
-      const newBuffer = [...prev, dataPoint];
-      
-      if (newBuffer.length >= MAX_FRAMES) {
-        const slicedBuffer = newBuffer.slice(-MAX_FRAMES);
-        if (!isPredictingRef.current) {
-           predictSequence(slicedBuffer);
-        }
-        return slicedBuffer;
-      }
-      return newBuffer;
-    });
   };
 
   return (
@@ -341,15 +213,13 @@ function PredictPage() {
         <CameraView onLandmarks={handleLandmarks} isPredicting={isPredicting} />
         <div className="absolute -bottom-12 left-4 right-4 md:right-8 md:bottom-8 md:w-96 z-40">
            <div className="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-6 border-t-4 border-t-blue-500 border border-slate-100">
-             <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">AI Result</span>
+             <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Real-time Translation</span>
                 {isPredicting && <Loader2 className="animate-spin text-blue-500 w-4 h-4" />}
              </div>
-             <h2 className="text-4xl font-black mb-4 text-slate-900">
-               {sequenceBuffer.length < MAX_FRAMES ? `กำลังเตรียมเฟรม (${sequenceBuffer.length}/60)` : result.label}
-             </h2>
+             <h2 className="text-4xl font-black mb-4 text-slate-900">{result.label}</h2>
              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${result.confidence * 100}%` }} />
+                <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${result.confidence * 100}%` }} />
              </div>
            </div>
         </div>
@@ -381,7 +251,6 @@ export default function App() {
       <Navbar page={page} setPage={setPage} isBackendOnline={isBackendOnline} />
       <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
-        {page === "data" && <DataPage />}
         {page === "predict" && <PredictPage />}
       </main>
     </div>
