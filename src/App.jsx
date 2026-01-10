@@ -5,7 +5,7 @@ import {
   Home as HomeIcon, Database, Activity, 
   CheckCircle, RefreshCw, ServerCrash,
   HeartPulse, Brain, BookOpen, 
-  Video, MonitorCheck
+  Video, MonitorCheck, StopCircle, WifiOff
 } from "lucide-react";
 
 // ==============================================
@@ -105,7 +105,7 @@ function HomePage({ setPage }) {
               <Database size={24} />
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-1">สอนท่ามือ</h3>
-            <p className="text-slate-500 text-sm">บันทึกภาพนิ่ง (Snapshot) เพื่อสอน AI</p>
+            <p className="text-slate-500 text-sm">บันทึกวิดีโอ 60 เฟรม</p>
           </button>
 
           <button onClick={() => setPage("dictionary")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
@@ -135,32 +135,44 @@ function DictionaryPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/dataset`)
-      .then(res => {
-        if (!res.ok) throw new Error("Connection failed");
-        return res.json();
-      })
-      .then(data => {
-        // จัดกลุ่มข้อมูลตาม label
-        const grouped = data.reduce((acc, curr) => {
-          acc[curr.label] = (acc[curr.label] || 0) + 1;
-          return acc;
-        }, {});
-        
-        const statsArray = Object.entries(grouped).map(([label, count]) => ({
-          label,
-          count,
-          lastUpdated: new Date().toLocaleDateString('th-TH')
-        }));
-        
-        setStats(statsArray);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setError("ไม่สามารถดึงข้อมูลได้ (โปรดตรวจสอบว่าเปิด main.py แล้ว)");
-        setLoading(false);
-      });
+    let isMounted = true;
+
+    const fetchData = async () => {
+        try {
+            const res = await fetch(`${API_URL}/dataset`);
+            if (!res.ok) {
+                throw new Error("Failed to connect to backend");
+            }
+            const data = await res.json();
+            
+            if (isMounted) {
+                // จัดกลุ่มข้อมูลตาม label
+                const grouped = data.reduce((acc, curr) => {
+                    acc[curr.label] = (acc[curr.label] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const statsArray = Object.entries(grouped).map(([label, count]) => ({
+                    label,
+                    count,
+                    lastUpdated: new Date().toLocaleDateString('th-TH')
+                }));
+                
+                setStats(statsArray);
+                setLoading(false);
+            }
+        } catch (err) {
+            console.warn("API Fetch Error:", err);
+            if (isMounted) {
+                setError("ไม่สามารถเชื่อมต่อ Server ได้ (ตรวจสอบว่ารัน main.py อยู่หรือไม่)");
+                setLoading(false);
+            }
+        }
+    };
+
+    fetchData();
+
+    return () => { isMounted = false; };
   }, []);
 
   return (
@@ -177,8 +189,15 @@ function DictionaryPage() {
           <Loader2 className="animate-spin text-blue-500 w-10 h-10" />
         </div>
       ) : error ? (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-2">
-          <ServerCrash size={20} /> {error}
+        <div className="bg-red-50 text-red-600 p-6 rounded-2xl flex flex-col items-center gap-3 text-center border border-red-100 shadow-sm">
+          <div className="p-3 bg-red-100 rounded-full text-red-600">
+             <WifiOff size={32} />
+          </div>
+          <div>
+              <h3 className="font-bold text-lg">การเชื่อมต่อล้มเหลว</h3>
+              <p className="text-sm opacity-90">{error}</p>
+              <p className="text-xs text-red-400 mt-2">คำแนะนำ: ตรวจสอบว่าไฟล์ main.py รันอยู่ที่ Port 8000</p>
+          </div>
         </div>
       ) : stats.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
@@ -234,15 +253,22 @@ const useHandTracking = (videoRef, onResults) => {
           landmarkerRef.current = landmarker;
           setLoading(false);
         }
-      } catch(e) { console.error(e); }
+      } catch(e) { 
+        console.error("MediaPipe Load Error:", e);
+        // Error handling for model load failure could be added here
+      }
     })();
     return () => { isMounted = false; };
   }, []);
 
   const processVideo = () => {
     if (videoRef.current && landmarkerRef.current && videoRef.current.readyState >= 2) {
-      const results = landmarkerRef.current.detectForVideo(videoRef.current, performance.now());
-      onResults(results);
+      try {
+        const results = landmarkerRef.current.detectForVideo(videoRef.current, performance.now());
+        onResults(results);
+      } catch (e) {
+        console.warn("Detection error (usually transient):", e);
+      }
     }
     requestAnimationFrame(processVideo);
   };
@@ -332,11 +358,11 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
       
       {overlayText && cameraActive && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
            <div className="bg-slate-900/70 text-white px-6 py-2 rounded-full backdrop-blur-md border border-white/10 text-sm font-medium flex items-center gap-3 shadow-lg">
              <div className="relative">
-               <div className={`w-2.5 h-2.5 rounded-full ${overlayText.includes("ตรวจพบ") ? "bg-emerald-400" : "bg-rose-500"}`} />
-               {overlayText.includes("ตรวจพบ") && <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />}
+               <div className={`w-2.5 h-2.5 rounded-full ${overlayText.includes("ตรวจพบ") || overlayText.includes("REC") ? "bg-emerald-400" : "bg-rose-500"}`} />
+               {(overlayText.includes("ตรวจพบ") || overlayText.includes("REC")) && <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />}
              </div>
              {overlayText}
            </div>
@@ -347,44 +373,75 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
 }
 
 // ==============================================
-// 🟢 DataPage (Snapshot Mode to Match main.py)
+// 🟢 DataPage (เปลี่ยนเป็น Sequence Recording Mode)
 // ==============================================
 function DataPage() {
   const [currentLandmarks, setCurrentLandmarks] = useState(null);
   const [label, setLabel] = useState("");
-  const [status, setStatus] = useState("ready"); // ready, uploading, success
+  const [status, setStatus] = useState("ready"); // ready, recording, uploading, success
+  const [progress, setProgress] = useState(0);
   
+  // ใช้ useRef เพื่อเก็บข้อมูลเฟรมระหว่างบันทึก
+  const framesBuffer = useRef([]);
+
   const handleLandmarksUpdate = (points) => {
     setCurrentLandmarks(points);
+    
+    // Logic การบันทึก
+    if (status === "recording") {
+      if (points) {
+        framesBuffer.current.push(points);
+        setProgress(framesBuffer.current.length);
+        
+        // ถ้าครบ 60 เฟรม ให้หยุดและส่ง
+        if (framesBuffer.current.length >= 60) {
+          finishRecording();
+        }
+      }
+    }
   };
 
-  const saveSnapshot = async () => {
-    if (!label) return alert("กรุณาใส่ชื่อท่าทางก่อนบันทึก");
+  const startRecording = () => {
+    if (!label) return alert("กรุณาใส่ชื่อท่าทางก่อนเริ่มบันทึก");
     if (!currentLandmarks) return alert("ไม่พบมือในกล้อง กรุณายกมือขึ้น");
     
+    framesBuffer.current = []; // เคลียร์ค่าเก่า
+    setProgress(0);
+    setStatus("recording");
+  };
+
+  const finishRecording = async () => {
     setStatus("uploading");
+    const sequenceData = framesBuffer.current;
     
     try {
-      // ส่งข้อมูลจุดชุดเดียว (Snapshot) ให้ตรงกับ main.py
+      // ส่งข้อมูลเป็น sequences (Array of Arrays)
       const res = await fetch(`${API_URL}/upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
             label: label, 
-            points: currentLandmarks // ตรงนี้ต้องเป็น 'points' ไม่ใช่ 'sequences'
+            sequences: sequenceData // Backend ต้องรองรับ key นี้
         })
       });
       
       if(!res.ok) {
-         const err = await res.json();
-         throw new Error(err.detail || "API Error");
+         // Handle non-200 responses safely
+         const contentType = res.headers.get("content-type");
+         let errorDetail = "API Error";
+         if (contentType && contentType.indexOf("application/json") !== -1) {
+             const err = await res.json();
+             errorDetail = err.detail || errorDetail;
+         }
+         throw new Error(errorDetail);
       }
       
       setStatus("success");
       setTimeout(() => setStatus("ready"), 2000);
-      setLabel(""); // Clear input
+      setLabel(""); 
+      setProgress(0);
     } catch (e) {
-      alert(`บันทึกไม่สำเร็จ: ${e.message}`);
+      alert(`บันทึกไม่สำเร็จ: ${e.message}. ตรวจสอบการเชื่อมต่อ Server`);
       console.error(e);
       setStatus("ready");
     }
@@ -399,10 +456,27 @@ function DataPage() {
            </div>
            <h2 className="text-2xl font-bold text-slate-800">มุมมองกล้อง</h2>
         </div>
-        <CameraView 
-          onLandmarks={handleLandmarksUpdate} 
-          overlayText={currentLandmarks ? `ตรวจพบมือพร้อมบันทึก` : "กรุณายกมือ"}
-        />
+        
+        {/* แสดง CameraView พร้อมสถานะ */}
+        <div className="relative">
+            <CameraView 
+              onLandmarks={handleLandmarksUpdate} 
+              overlayText={
+                status === "recording" ? `REC: ${progress}/60` : 
+                currentLandmarks ? `ตรวจพบมือพร้อมบันทึก` : "กรุณายกมือ"
+              }
+            />
+            
+            {/* Progress Bar Overlay ตอนอัด */}
+            {status === "recording" && (
+                <div className="absolute bottom-0 left-0 right-0 h-2 bg-slate-800/50 rounded-b-3xl overflow-hidden z-20">
+                    <div 
+                        className="h-full bg-red-500 transition-all duration-75 ease-linear" 
+                        style={{ width: `${(progress / 60) * 100}%` }}
+                    />
+                </div>
+            )}
+        </div>
       </div>
       
       <div className="lg:w-96 flex flex-col justify-center">
@@ -413,10 +487,10 @@ function DataPage() {
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800">
                 <Database className="text-blue-500" />
-                สอนท่ามือ (Snapshot)
+                สอนท่ามือ (Sequence)
               </h2>
               <p className="text-slate-500 mt-2 text-sm leading-relaxed">
-                ทำท่าทางค้างไว้หน้ากล้อง แล้วกดปุ่มบันทึกเพื่อเก็บข้อมูลลงฐานข้อมูล
+                ระบบจะบันทึกภาพต่อเนื่อง <strong>60 เฟรม</strong> เพื่อจับการเคลื่อนไหว กรุณาทำท่าทางให้ต่อเนื่อง
               </p>
             </div>
             
@@ -429,16 +503,18 @@ function DataPage() {
                   onChange={e => setLabel(e.target.value)}
                   placeholder="เช่น ปวดหัว, รัก..."
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-400"
-                  disabled={status === "uploading"}
+                  disabled={status === "recording" || status === "uploading"}
                 />
               </div>
 
               <button 
-                onClick={saveSnapshot}
-                disabled={!currentLandmarks || !label || status === "uploading"}
+                onClick={status === "recording" ? finishRecording : startRecording}
+                disabled={(!currentLandmarks || !label) && status === "ready" || status === "uploading"}
                 className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-lg transition-all transform active:scale-95 ${
                   status === "success" 
                     ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
+                    : status === "recording"
+                    ? "bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse"
                     : status === "uploading"
                     ? "bg-slate-400 text-white cursor-wait"
                     : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
@@ -446,18 +522,20 @@ function DataPage() {
               >
                 {status === "uploading" && <Loader2 className="animate-spin" />}
                 {status === "success" && <CheckCircle />}
-                {status === "ready" && <Save size={20} />}
+                {status === "ready" && <Video size={20} />}
+                {status === "recording" && <StopCircle size={20} />}
                 
                 {status === "success" ? "บันทึกเรียบร้อย" : 
+                 status === "recording" ? `กำลังบันทึก... (${progress}/60)` :
                  status === "uploading" ? "กำลังส่งข้อมูล..." :
-                 "บันทึกท่าทาง"}
+                 "เริ่มบันทึก (60 เฟรม)"}
               </button>
             </div>
 
             <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 text-sm text-blue-700/80">
               <div className="flex gap-3">
                  <div className="mt-0.5"><Brain size={16} /></div>
-                 <p>ระบบจะบันทึกตำแหน่งของนิ้วมือ ณ ขณะนั้น กรุณาทำท่าให้ชัดเจนที่สุด</p>
+                 <p>กรุณาทำท่าทางให้ <strong>สมูท</strong> และ <strong>ต่อเนื่อง</strong> จนกว่าหลอดจะเต็ม</p>
               </div>
             </div>
           </div>
