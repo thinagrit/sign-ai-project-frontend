@@ -78,7 +78,7 @@ function HomePage({ setPage }) {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10 animate-pulse" />
-      <div className="max-w-4xl w-full text-center space-y-12 animate-fade-in-up">
+      <div className="max-w-4xl w-full text-center space-y-12">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium shadow-sm">
             <HeartPulse size={16} /> นวัตกรรมเพื่อการแพทย์ยุคใหม่
@@ -146,7 +146,7 @@ function DictionaryPage() {
             }
         } catch (err) {
             if (isMounted) {
-                setError("เชื่อมต่อไม่ได้ (ตรวจสอบ main.py)");
+                setError("เชื่อมต่อไม่ได้ (ตรวจสอบการตั้งค่า Backend)");
                 setLoading(false);
             }
         }
@@ -205,9 +205,19 @@ const useHandTracking = (videoRef, onResults) => {
   }, []);
 
   const processVideo = () => {
-    if (videoRef.current && landmarkerRef.current && videoRef.current.readyState >= 2) {
-      // ป้องกัน Warning เรื่อง IMAGE_DIMENSIONS โดยเช็คขนาดวิดีโอ
-      const results = landmarkerRef.current.detectForVideo(videoRef.current, performance.now());
+    const video = videoRef.current;
+    const landmarker = landmarkerRef.current;
+
+    if (video && landmarker && video.readyState >= 2) {
+      // ✅ แก้ไขตามคำแนะนำ: ระบุ imageWidth และ imageHeight เพื่อลด Warning 
+      const results = landmarker.detectForVideo(
+        video, 
+        performance.now(),
+        {
+          imageWidth: video.videoWidth,
+          imageHeight: video.videoHeight,
+        }
+      );
       onResults(results);
     }
     requestAnimationFrame(processVideo);
@@ -226,7 +236,6 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
     if (!canvas || !video) return;
 
     const ctx = canvas.getContext("2d");
-    // อัปเดตขนาด Canvas ให้ตรงวิดีโอเสมอ
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -278,12 +287,12 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 bg-slate-900">
           <Loader2 className="animate-spin mb-4 text-blue-500 w-10 h-10" />
-          <p className="animate-pulse">กำลังดาวน์โหลดโมเดล AI...</p>
+          <p>กำลังดาวน์โหลดโมเดล AI...</p>
         </div>
       )}
       {!loading && !cameraActive && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-slate-900/40 backdrop-blur-sm">
-          <button onClick={startCamera} className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-2xl flex items-center gap-3 active:scale-95 transition-transform">
+          <button onClick={startCamera} className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-2xl flex items-center gap-3">
             <Camera size={24} className="text-blue-600" /> <span>เปิดกล้องเพื่อเริ่มต้น</span>
           </button>
         </div>
@@ -365,7 +374,7 @@ function DataPage() {
                     className={`w-full py-4 rounded-2xl font-bold transition-all ${
                         status === "recording" ? "bg-red-500 text-white animate-pulse" : 
                         status === "uploading" ? "bg-slate-300 text-slate-500" :
-                        "bg-blue-600 text-white shadow-lg hover:shadow-blue-500/30"
+                        "bg-blue-600 text-white shadow-lg"
                     }`}
                 >
                     {status === "recording" ? `กำลังบันทึก ${progress}/60` : 
@@ -387,7 +396,7 @@ function PredictPage() {
   const handleLandmarks = async (points) => {
     if (!points) return;
     const now = Date.now();
-    if (now - lastSentRef.current < 400) return; // Predict ทุกๆ 0.4 วินาที
+    if (now - lastSentRef.current < 400) return;
     lastSentRef.current = now;
     try {
       const res = await fetch(`${API_URL}/predict`, {
@@ -405,7 +414,7 @@ function PredictPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      {error && <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-center">ตัดการเชื่อมต่อจาก Server...</div>}
+      {error && <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-center">เกิดข้อผิดพลาดในการเชื่อมต่อ Server</div>}
       <CameraView onLandmarks={handleLandmarks} overlayText="โหมดแปลผลอัตโนมัติ" />
       <div className="p-8 bg-white rounded-3xl shadow-xl border text-center transition-all">
         <h2 className={`text-6xl font-black mb-2 ${result.confidence > 0.6 ? "text-blue-600" : "text-slate-300"}`}>
@@ -425,7 +434,7 @@ function PredictPage() {
 export default function App() {
   const [page, setPage] = useState("home");
   return (
-    <div className="min-h-screen bg-slate-50/50 pt-16 selection:bg-blue-100">
+    <div className="min-h-screen bg-slate-50/50 pt-16">
       <Navbar page={page} setPage={setPage} />
       <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
