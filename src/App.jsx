@@ -11,7 +11,7 @@ import {
 // ==============================================
 // ⚙️ ตั้งค่า API (ชี้ไปที่ Python Backend)
 // ==============================================
-const API_URL = "http://localhost:8000"; 
+const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 // ==============================================
 
 // --- Components ---
