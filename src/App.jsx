@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 // ==============================================
-// ⚙️ ตั้งค่า API (เปลี่ยนจาก localhost เป็น Render URL ของคุณ)
+// ⚙️ ตั้งค่า API (ตรวจสอบให้มั่นใจว่า URL ของ Render ถูกต้อง)
 // ==============================================
 const API_URL = "https://sign-ai-project-backend.onrender.com"; 
 // ==============================================
@@ -25,14 +25,14 @@ function Navbar({ page, setPage }) {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm transition-all duration-300">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
           <div 
             className="flex items-center gap-2 font-bold text-2xl cursor-pointer"
             onClick={() => setPage("home")}
           >
-            <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 p-2 rounded-lg shadow-lg shadow-blue-500/30">
+            <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 p-2 rounded-lg shadow-lg">
               <Hand className="text-white w-6 h-6" />
             </div>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
@@ -78,8 +78,6 @@ function HomePage({ setPage }) {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10 animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl -z-10 animate-pulse delay-700" />
-
       <div className="max-w-4xl w-full text-center space-y-12 animate-fade-in-up">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium shadow-sm">
@@ -92,34 +90,33 @@ function HomePage({ setPage }) {
             </span>
           </h1>
           <p className="text-xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
-            เชื่อมต่อการสื่อสารระหว่างบุคลากรทางการแพทย์และผู้บกพร่องทางการได้ยิน 
-            ด้วยเทคโนโลยี AI ที่แม่นยำและรวดเร็ว
+            เชื่อมต่อการสื่อสารระหว่างบุคลากรทางการแพทย์และผู้บกพร่องทางการได้ยิน
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <button onClick={() => setPage("data")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
-            <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+          <button onClick={() => setPage("data")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-4">
               <Database size={24} />
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-1">สอนท่ามือ</h3>
             <p className="text-slate-500 text-sm">บันทึกวิดีโอ 60 เฟรม</p>
           </button>
 
-          <button onClick={() => setPage("dictionary")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
-            <div className="h-12 w-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
+          <button onClick={() => setPage("dictionary")} className="group p-6 bg-white rounded-3xl border border-slate-100 shadow-xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-4">
               <BookOpen size={24} />
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-1">คลังคำศัพท์</h3>
             <p className="text-slate-500 text-sm">ดูรายการคำศัพท์ที่มีอยู่</p>
           </button>
 
-          <button onClick={() => setPage("predict")} className="group p-6 bg-slate-900 rounded-3xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-left">
-            <div className="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
+          <button onClick={() => setPage("predict")} className="group p-6 bg-slate-900 rounded-3xl shadow-xl hover:-translate-y-1 transition-all text-left">
+            <div className="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center text-cyan-400 mb-4">
               <Activity size={24} />
             </div>
             <h3 className="text-xl font-bold text-white mb-1">แปลภาษา</h3>
-            <p className="text-slate-400 text-sm">ใช้งานกล้องเพื่อแปลผล Real-time</p>
+            <p className="text-slate-400 text-sm">แปลผลแบบ Real-time</p>
           </button>
         </div>
       </div>
@@ -137,22 +134,19 @@ function DictionaryPage() {
     const fetchData = async () => {
         try {
             const res = await fetch(`${API_URL}/dataset`);
-            if (!res.ok) throw new Error("Failed to connect to backend");
+            if (!res.ok) throw new Error("Failed to connect");
             const data = await res.json();
             if (isMounted) {
                 const grouped = data.reduce((acc, curr) => {
                     acc[curr.label] = (acc[curr.label] || 0) + 1;
                     return acc;
                 }, {});
-                const statsArray = Object.entries(grouped).map(([label, count]) => ({
-                    label, count, lastUpdated: new Date().toLocaleDateString('th-TH')
-                }));
-                setStats(statsArray);
+                setStats(Object.entries(grouped).map(([label, count]) => ({ label, count })));
                 setLoading(false);
             }
         } catch (err) {
             if (isMounted) {
-                setError("ไม่สามารถเชื่อมต่อ Server ได้");
+                setError("เชื่อมต่อไม่ได้ (ตรวจสอบ main.py)");
                 setLoading(false);
             }
         }
@@ -162,38 +156,26 @@ function DictionaryPage() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-          <BookOpen className="text-purple-500" /> คลังคำศัพท์ในระบบ
-        </h2>
-      </div>
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-500 w-10 h-10" /></div>
-      ) : error ? (
-        <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center border border-red-100">
-          <WifiOff size={32} className="mx-auto mb-2" />
-          <p>{error}</p>
-        </div>
-      ) : stats.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-          <Database className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">ยังไม่มีข้อมูลในระบบ</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stats.map((item, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-              <h3 className="text-xl font-bold text-slate-800">{item.label}</h3>
-              <p className="text-xs text-slate-400">{item.count} ตัวอย่าง</p>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
+        <BookOpen className="text-purple-500" /> คลังคำศัพท์
+      </h2>
+      {loading ? <div className="text-center py-20"><Loader2 className="animate-spin mx-auto w-10 h-10 text-blue-500" /></div> : 
+       error ? <div className="bg-red-50 text-red-500 p-10 text-center rounded-3xl border border-red-100">{error}</div> :
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         {stats.map((s, i) => (
+           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+             <h3 className="text-xl font-bold">{s.label}</h3>
+             <p className="text-slate-400">{s.count} ตัวอย่าง</p>
+           </div>
+         ))}
+       </div>
+      }
     </div>
   );
 }
 
+// --- MediaPipe Logic ---
 const useHandTracking = (videoRef, onResults) => {
   const [loading, setLoading] = useState(true);
   const landmarkerRef = useRef(null);
@@ -217,13 +199,14 @@ const useHandTracking = (videoRef, onResults) => {
           landmarkerRef.current = landmarker;
           setLoading(false);
         }
-      } catch(e) { console.error(e); }
+      } catch(e) { console.error("MediaPipe Error:", e); }
     })();
     return () => { isMounted = false; };
   }, []);
 
   const processVideo = () => {
     if (videoRef.current && landmarkerRef.current && videoRef.current.readyState >= 2) {
+      // ป้องกัน Warning เรื่อง IMAGE_DIMENSIONS โดยเช็คขนาดวิดีโอ
       const results = landmarkerRef.current.detectForVideo(videoRef.current, performance.now());
       onResults(results);
     }
@@ -236,46 +219,58 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
+
   const { loading, startLoop } = useHandTracking(videoRef, (results) => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     if (!canvas || !video) return;
+
     const ctx = canvas.getContext("2d");
-    if (canvas.width !== video.videoWidth) {
+    // อัปเดตขนาด Canvas ให้ตรงวิดีโอเสมอ
+    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
     }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.scale(-1, 1);
     ctx.translate(-canvas.width, 0);
+
     if (results.landmarks && results.landmarks.length > 0) {
       if (showSkeleton) {
-        for (const handLandmarks of results.landmarks) {
-            for (let p of handLandmarks) {
-                ctx.beginPath();
-                ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-                ctx.fillStyle = "#3B82F6";
-                ctx.fill();
-            }
-        }
+        results.landmarks.forEach(hand => {
+          hand.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = "#3B82F6";
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          });
+        });
       }
       const flatPoints = results.landmarks.flatMap(hand => hand.flatMap(p => [p.x, p.y, p.z]));
       onLandmarks(flatPoints);
-    } else { onLandmarks(null); }
+    } else {
+      onLandmarks(null);
+    }
     ctx.restore();
   });
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 1280, height: 720, facingMode: "user" } 
+      });
       videoRef.current.srcObject = stream;
       videoRef.current.onloadedmetadata = () => {
         videoRef.current.play();
         setCameraActive(true);
         startLoop();
       };
-    } catch (e) { alert("ไม่สามารถเปิดกล้องได้"); }
+    } catch (e) { alert("ไม่สามารถเข้าถึงกล้องได้"); }
   };
 
   return (
@@ -283,21 +278,21 @@ function CameraView({ onLandmarks, overlayText, showSkeleton = true }) {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 bg-slate-900">
           <Loader2 className="animate-spin mb-4 text-blue-500 w-10 h-10" />
-          <p>กำลังเตรียมโมเดล AI...</p>
+          <p className="animate-pulse">กำลังดาวน์โหลดโมเดล AI...</p>
         </div>
       )}
       {!loading && !cameraActive && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 bg-slate-900/60 backdrop-blur-sm">
-          <button onClick={startCamera} className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-xl flex items-center gap-3">
-            <Camera size={24} className="text-blue-600" /> <span>เปิดกล้องใช้งาน</span>
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-slate-900/40 backdrop-blur-sm">
+          <button onClick={startCamera} className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold shadow-2xl flex items-center gap-3 active:scale-95 transition-transform">
+            <Camera size={24} className="text-blue-600" /> <span>เปิดกล้องเพื่อเริ่มต้น</span>
           </button>
         </div>
       )}
-      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1] opacity-90" playsInline muted />
+      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" playsInline muted />
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]" />
       {overlayText && cameraActive && (
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
-           <div className="bg-slate-900/70 text-white px-6 py-2 rounded-full border border-white/10 text-sm font-medium shadow-lg">
+           <div className="bg-slate-900/80 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-medium backdrop-blur-md shadow-xl">
              {overlayText}
            </div>
         </div>
@@ -323,8 +318,8 @@ function DataPage() {
   };
 
   const startRecording = () => {
-    if (!label) return alert("กรุณาใส่ชื่อท่าทาง");
-    if (!currentLandmarks) return alert("ไม่พบมือในกล้อง");
+    if (!label.trim()) return alert("กรุณาใส่ชื่อท่าทางก่อนบันทึก");
+    if (!currentLandmarks) return alert("กรุณายกมือให้กล้องเห็นก่อนเริ่ม");
     framesBuffer.current = [];
     setProgress(0);
     setStatus("recording");
@@ -332,32 +327,53 @@ function DataPage() {
 
   const finishRecording = async () => {
     setStatus("uploading");
-    const sequenceData = framesBuffer.current;
     try {
       const res = await fetch(`${API_URL}/upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, sequences: sequenceData })
+        body: JSON.stringify({ label, sequences: framesBuffer.current })
       });
-      if(!res.ok) throw new Error("Backend Error 422 หรืออื่นๆ");
+      if(!res.ok) throw new Error("Server Error 422 - Check main.py");
       setStatus("success");
       setTimeout(() => setStatus("ready"), 2000);
       setLabel(""); setProgress(0);
     } catch (e) {
-      alert(`บันทึกไม่สำเร็จ: ${e.message}`);
+      alert(`Error: ${e.message}`);
       setStatus("ready");
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-10">
-      <div className="flex-1 space-y-4">
-        <CameraView onLandmarks={handleLandmarksUpdate} overlayText={status === "recording" ? `REC: ${progress}/60` : "พร้อมบันทึก"} />
+      <div className="flex-1">
+        <CameraView onLandmarks={handleLandmarksUpdate} overlayText={status === "recording" ? `REC: ${progress}/60` : "พร้อมบันทึกข้อมูล"} />
       </div>
-      <div className="lg:w-96 space-y-4">
-        <h2 className="text-2xl font-bold">สอนท่ามือ</h2>
-        <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="ชื่อท่าทาง..." className="w-full p-4 border rounded-2xl" />
-        <button onClick={startRecording} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">เริ่มบันทึก (60 เฟรม)</button>
+      <div className="lg:w-96 space-y-6">
+        <div className="bg-white p-6 rounded-3xl border shadow-sm">
+            <h2 className="text-xl font-bold mb-4">ตั้งค่าการสอน</h2>
+            <div className="space-y-4">
+                <input 
+                    type="text" 
+                    value={label} 
+                    onChange={e => setLabel(e.target.value)} 
+                    placeholder="ชื่อท่าทาง..." 
+                    className="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+                <button 
+                    onClick={startRecording} 
+                    disabled={status !== "ready"}
+                    className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                        status === "recording" ? "bg-red-500 text-white animate-pulse" : 
+                        status === "uploading" ? "bg-slate-300 text-slate-500" :
+                        "bg-blue-600 text-white shadow-lg hover:shadow-blue-500/30"
+                    }`}
+                >
+                    {status === "recording" ? `กำลังบันทึก ${progress}/60` : 
+                     status === "uploading" ? "กำลังประมวลผล..." : 
+                     status === "success" ? "บันทึกสำเร็จ!" : "เริ่มบันทึกวิดีโอ"}
+                </button>
+            </div>
+        </div>
       </div>
     </div>
   );
@@ -371,7 +387,7 @@ function PredictPage() {
   const handleLandmarks = async (points) => {
     if (!points) return;
     const now = Date.now();
-    if (now - lastSentRef.current < 500) return;
+    if (now - lastSentRef.current < 400) return; // Predict ทุกๆ 0.4 วินาที
     lastSentRef.current = now;
     try {
       const res = await fetch(`${API_URL}/predict`, {
@@ -383,17 +399,24 @@ function PredictPage() {
         const data = await res.json();
         setResult(data);
         setError(false);
-      }
+      } else { setError(true); }
     } catch (e) { setError(true); }
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      <CameraView onLandmarks={handleLandmarks} overlayText="กำลังวิเคราะห์..." />
-      <div className="p-8 bg-white rounded-3xl shadow-xl border text-center">
-        <p className="text-slate-400 text-sm uppercase font-bold tracking-widest">คำแปลที่พบ</p>
-        <h2 className="text-5xl font-black text-blue-600 my-4">{result.label}</h2>
-        <p className="text-slate-500">ความเชื่อมั่น: {(result.confidence * 100).toFixed(0)}%</p>
+      {error && <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-center">ตัดการเชื่อมต่อจาก Server...</div>}
+      <CameraView onLandmarks={handleLandmarks} overlayText="โหมดแปลผลอัตโนมัติ" />
+      <div className="p-8 bg-white rounded-3xl shadow-xl border text-center transition-all">
+        <h2 className={`text-6xl font-black mb-2 ${result.confidence > 0.6 ? "text-blue-600" : "text-slate-300"}`}>
+          {result.label}
+        </h2>
+        <div className="flex items-center justify-center gap-2">
+            <div className="w-48 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 transition-all" style={{ width: `${result.confidence * 100}%` }} />
+            </div>
+            <span className="text-slate-400 font-mono text-sm">{(result.confidence * 100).toFixed(0)}%</span>
+        </div>
       </div>
     </div>
   );
@@ -402,7 +425,7 @@ function PredictPage() {
 export default function App() {
   const [page, setPage] = useState("home");
   return (
-    <div className="min-h-screen bg-slate-50/50 pt-16">
+    <div className="min-h-screen bg-slate-50/50 pt-16 selection:bg-blue-100">
       <Navbar page={page} setPage={setPage} />
       <main className="container mx-auto">
         {page === "home" && <HomePage setPage={setPage} />}
