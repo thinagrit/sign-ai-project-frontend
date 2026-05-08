@@ -1444,7 +1444,7 @@ function HistoryPage() {
 
 // ── Password Gate ─────────────────────────────
 // 🔑 เปลี่ยนรหัสผ่านได้ที่นี่
-const DATA_PASSWORD = "signai1234";
+const DATA_PASSWORD = "ramflukegrit";
 
 function PasswordGate({ onSuccess }) {
   const [input, setInput] = useState("");
