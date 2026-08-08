@@ -1535,6 +1535,7 @@ function PredictPage() {
   const [manualResult, setManualResult] = useState({ label: "—", confidence: 0 });
   const [lightboxSign, setLightboxSign] = useState(null); // sign shown big in the picture viewer (เลือกท่า mode)
   const lastSentRef = useRef(0);
+  const missingSinceRef = useRef(null); // เวลาที่เริ่มไม่พบมือต่อเนื่อง — ใช้เคลียร์ผลลัพธ์เมื่อเอามือลง
 
   useEffect(() => {
     fetch(`${API_URL}/signs`)
@@ -1545,7 +1546,17 @@ function PredictPage() {
 
   // ── Live camera mode ──
   const handleLandmarksManual = async (points) => {
-    if (!points) return;
+    if (!points) {
+      // ไม่พบมือ — ถ้าหายไปต่อเนื่องเกิน 4 วินาที ค่อยเคลียร์ผลลัพธ์ (กันกะพริบตอนหลุดเฟรมแป๊บเดียว)
+      if (missingSinceRef.current === null) {
+        missingSinceRef.current = Date.now();
+      } else if (Date.now() - missingSinceRef.current > 4000) {
+        setManualResult({ label: "—", confidence: 0 });
+      }
+      return;
+    }
+    missingSinceRef.current = null;
+
     const now = Date.now();
     if (now - lastSentRef.current < 350) return;
     lastSentRef.current = now;
