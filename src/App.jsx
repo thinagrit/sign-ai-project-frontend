@@ -738,6 +738,69 @@ function StepImageBox({ label, stepNum, totalSteps, cameraRef, baseName, existin
   );
 }
 
+// กล่องกรอกคำอธิบายท่า — ผูกกับ "ชื่อท่า" (ไม่แยกตามขั้นตอน) ใช้ในหน้า "สอนท่ามือ"
+function SignDescriptionBox({ baseName, existingLabels, onChanged }) {
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const trimmed = baseName.trim();
+
+  useEffect(() => {
+    const known = existingLabels.find((l) => l.name === trimmed);
+    setText(known?.description || "");
+    setSaved(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmed]); // ตั้งใจไม่ผูกกับ existingLabels เพื่อไม่ให้ทับข้อความที่กำลังพิมพ์อยู่
+
+  if (!trimmed) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/sign-description/${encodeURIComponent(trimmed)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: text }),
+      });
+      if (!res.ok) throw new Error();
+      setSaved(true);
+      onChanged?.();
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      alert("บันทึกคำอธิบายไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-semibold text-slate-700">
+        คำอธิบายท่า <span className="font-normal text-slate-400">— โชว์ตอนเลือกแปล</span>
+      </label>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="เช่น ยกมือขวาแตะขมับแล้ววนเป็นวงกลม 2 รอบ..."
+        rows={3}
+        maxLength={500}
+        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:outline-none text-sm text-slate-700 resize-none transition-colors"
+      />
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-300">{text.length}/500</span>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold hover:bg-slate-700 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5"
+        >
+          {saving ? <Loader2 size={13} className="animate-spin" /> : saved ? <CheckCircle size={13} /> : null}
+          {saved ? "บันทึกแล้ว" : "บันทึกคำอธิบาย"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Data Page ─────────────────────────────────
 function DataPage() {
   const [landmarks, setLandmarks] = useState(null);
@@ -1094,6 +1157,13 @@ function DataPage() {
               onChanged={fetchLabels}
             />
 
+            {/* Description for this sign — shown later on the Predict page */}
+            <SignDescriptionBox
+              baseName={baseName}
+              existingLabels={existingLabels}
+              onChanged={fetchLabels}
+            />
+
             {/* Save button — single mode */}
             {mode === "single" && (
               <button
@@ -1248,6 +1318,12 @@ function DictionaryPage() {
   const [importResult, setImportResult] = useState(null);
   const importFileRef = useRef(null);
 
+  // Export / Import password gate
+  const [pwGateAction, setPwGateAction] = useState(null); // "export" | "import" | null
+  const [gatePwInput, setGatePwInput] = useState("");
+  const [gatePwError, setGatePwError] = useState(false);
+  const [gatePwShake, setGatePwShake] = useState(false);
+
   const fetchSigns = () => {
     setLoading(true);
     fetch(`${API_URL}/signs`)
@@ -1278,6 +1354,21 @@ function DictionaryPage() {
       closeDelete(); fetchSigns();
     } catch { alert("ลบไม่สำเร็จ"); }
     finally { setDeleting(false); }
+  };
+
+  // ── Export/Import password gate ──
+  const openPwGate = (action) => { setPwGateAction(action); setGatePwInput(""); setGatePwError(false); };
+  const closePwGate = () => { setPwGateAction(null); setGatePwInput(""); setGatePwError(false); };
+  const confirmPwGate = () => {
+    if (gatePwInput !== DATA_PASSWORD) {
+      setGatePwError(true); setGatePwShake(true); setGatePwInput("");
+      setTimeout(() => setGatePwShake(false), 500);
+      return;
+    }
+    const action = pwGateAction;
+    closePwGate();
+    if (action === "export") handleExport();
+    else if (action === "import") importFileRef.current?.click();
   };
 
   // ── Export ──
@@ -1373,6 +1464,46 @@ function DictionaryPage() {
         </div>
       )}
 
+      {/* Export/Import password gate modal */}
+      {pwGateAction && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+          <div className={`bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm ${gatePwShake ? "animate-[wiggle_0.4s_ease-in-out]" : ""}`}>
+            <style>{`@keyframes wiggle{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}`}</style>
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-3xl">
+                {pwGateAction === "export" ? "📤" : "📥"}
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 text-center mb-1">ยืนยันตัวตนผู้ดูแลระบบ</h3>
+            <p className="text-slate-500 text-sm text-center mb-6">
+              {pwGateAction === "export" ? "ใส่รหัสผ่านเพื่อ Export ข้อมูลทั้งหมด" : "ใส่รหัสผ่านเพื่อ Import ข้อมูล"}
+            </p>
+            <div className="space-y-3">
+              <input
+                type="password"
+                value={gatePwInput}
+                onChange={(e) => { setGatePwInput(e.target.value); setGatePwError(false); }}
+                onKeyDown={(e) => e.key === "Enter" && confirmPwGate()}
+                placeholder="ใส่รหัสผ่านผู้ดูแลระบบ"
+                autoFocus
+                className={`w-full px-4 py-3.5 rounded-2xl border text-sm font-medium outline-none transition-all ${gatePwError ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50 focus:ring-2 focus:ring-purple-300/30 focus:border-purple-300"}`}
+              />
+              {gatePwError && <p className="text-red-500 text-xs text-center flex items-center justify-center gap-1"><AlertCircle size={12} /> รหัสผ่านไม่ถูกต้อง</p>}
+              <div className="flex gap-3">
+                <button onClick={closePwGate} className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">ยกเลิก</button>
+                <button
+                  onClick={confirmPwGate}
+                  disabled={!gatePwInput}
+                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  ยืนยัน
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -1419,7 +1550,7 @@ function DictionaryPage() {
           className="hidden"
         />
         <button
-          onClick={() => importFileRef.current?.click()}
+          onClick={() => openPwGate("import")}
           disabled={importing}
           className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:border-purple-300 hover:text-purple-600 disabled:opacity-40 transition-all"
         >
@@ -1432,7 +1563,7 @@ function DictionaryPage() {
 
         {/* Export button */}
         <button
-          onClick={handleExport}
+          onClick={() => openPwGate("export")}
           disabled={exporting || signs.length === 0}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
         >
@@ -1671,6 +1802,9 @@ function PredictPage() {
                   <span className="text-xs bg-purple-100 text-purple-600 px-2.5 py-1 rounded-full font-semibold">{selectedSign.steps} ขั้นตอน</span>
                 )}
               </div>
+              {selectedSign.description && (
+                <p className="text-sm text-slate-500 leading-relaxed mb-4 whitespace-pre-wrap">{selectedSign.description}</p>
+              )}
               <div className={`grid gap-4 ${selectedSign.steps > 1 ? "sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1 max-w-xs mx-auto"}`}>
                 {Array.from({ length: selectedSign.steps }, (_, i) => i + 1).map((step) => {
                   const label = selectedSign.steps === 1 ? selectedSign.name : `${selectedSign.name}_${step}`;
